@@ -160,4 +160,3 @@ div {
 - Nesting `@` blocks is not supported.
 - Properties and values is trimmed.
 - The last `;` in the rule is removed.
-- Content inside selectors are not trimmed.

@@ -20,6 +20,8 @@ public sealed class SimpleCSSCompiler
     private List<SimpleCSSCompiler> Stylesheets { get; set; } = new List<SimpleCSSCompiler>();
     private List<string> Declarations { get; set; } = new List<string>();
 
+    private CSSCompilerOptions? Options { get; set; }
+
     private SimpleCSSCompiler() { }
 
     private string Export()
@@ -29,13 +31,17 @@ public sealed class SimpleCSSCompiler
         foreach (string decl in Declarations)
         {
             sb.Append(decl);
+            if (Options?.Pretty == true) sb.Append("\n");
         }
-        ExportRules(sb, this.Rules);
+        if (Options?.Pretty == true) sb.Append("\n");
+        ExportRules(sb, this, 0);
         foreach (SimpleCSSCompiler stylesheet in Stylesheets)
         {
-            ExportStylesheet(sb, stylesheet);
+            stylesheet.Options = this.Options;
+            ExportStylesheet(sb, stylesheet, 0);
         }
 
+        if (Options?.Pretty == true) TrimEndSb(sb);
         return sb.ToString();
     }
 
@@ -44,52 +50,85 @@ public sealed class SimpleCSSCompiler
     /// </summary>
     /// <param name="css">The byte array including the top module CSS code.</param>
     /// <param name="encoder">The encoder which will be used to decode the CSS output.</param>
+    /// <param name="options">Optional options and parameters to the compilation.</param>
     /// <returns>The compiled and minified UTF-8 CSS.</returns>
-    public static string Compile(ReadOnlySpan<byte> css, Encoding encoder)
+    public static string Compile(ReadOnlySpan<byte> css, Encoding encoder, CSSCompilerOptions? options = null)
     {
-        return Compile(encoder.GetString(css));
+        return Compile(encoder.GetString(css), options);
     }
 
     /// <summary>
     /// Compiles a top-module CSS stylesheet to legacy CSS, with the code already minified.
     /// </summary>
     /// <param name="css">The top module CSS code.</param>
+    /// <param name="options">Optional options and parameters to the compilation.</param>
     /// <returns>The compiled and minified CSS.</returns>
-    public static string Compile(string css)
+    public static string Compile(string css, CSSCompilerOptions? options = null)
     {
         string prepared = PrepareString(css);
-        SimpleCSSCompiler s = new SimpleCSSCompiler();
+        SimpleCSSCompiler s = new SimpleCSSCompiler() { Options = options };
         s.ParseCss(prepared);
-        return s.Export();
+        return s.Export().Trim();
     }
 
-    private static void ExportStylesheet(StringBuilder sb, SimpleCSSCompiler css)
+    private static void ExportStylesheet(StringBuilder sb, SimpleCSSCompiler css, int indentLevel)
     {
         if (css.AtRule != "")
         {
+            if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
             sb.Append(css.AtRule);
+            if (css.Options?.Pretty == true) sb.Append(' ');
             sb.Append('{');
+            if (css.Options?.Pretty == true) sb.Append('\n');
         }
-        ExportRules(sb, css.Rules);
-        if (css.AtRule != "") sb.Append('}');
+        ExportRules(sb, css, indentLevel + 1);
+        if (css.Options?.Pretty == true) TrimEndSb(sb);
+        if (css.AtRule != "")
+        {
+            if (css.Options?.Pretty == true) sb.Append('\n');
+            if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
+            sb.Append('}');
+            if (css.Options?.Pretty == true) sb.Append("\n\n");
+        }
     }
 
-    private static void ExportRules(StringBuilder sb, IEnumerable<CssRule> rules)
+    private static void ExportRules(StringBuilder sb, SimpleCSSCompiler css, int indentLevel)
     {
-        foreach (var rule in rules)
+        foreach (var rule in css.Rules)
         {
+            if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
             sb.Append(rule.Selector);
+            if (css.Options?.Pretty == true) sb.Append(' ');
             sb.Append('{');
+            if (css.Options?.Pretty == true) sb.Append('\n');
             foreach (KeyValuePair<string, string> property in rule.Properties)
             {
+                if (css.Options?.Pretty == true) sb.Append(new string(' ', (indentLevel + 1) * 4));
                 sb.Append(property.Key);
                 sb.Append(':');
+                if (css.Options?.Pretty == true) sb.Append(' ');
                 sb.Append(property.Value);
                 sb.Append(';');
+                if (css.Options?.Pretty == true) sb.Append('\n');
             }
             sb.Length--; // remove the last ;
+            if (css.Options?.Pretty == true) sb.Append('\n');
+            if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
             sb.Append('}');
+            if (css.Options?.Pretty == true) sb.Append("\n\n");
         }
+    }
+
+    private static void TrimEndSb(StringBuilder sb)
+    {
+        int i = sb.Length - 1;
+
+        for (; i >= 0; i--)
+            if (!char.IsWhiteSpace(sb[i]))
+                break;
+
+        if (i < sb.Length - 1)
+            sb.Length = i + 1;
     }
 
     private void ParseCss(string css)
@@ -139,15 +178,6 @@ public sealed class SimpleCSSCompiler
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool IsProperty(string mount)
-    {
-        string trimmed = mount.Trim();
-        if (trimmed.Length == 0) return false;
-        if (Char.IsLetter(trimmed[0]) || trimmed[0] == '-') return true;
-        return false;
-    }
-
     private string FormatSelector(string current, string before)
     {
         StringBuilder sb = new StringBuilder();
@@ -155,7 +185,10 @@ public sealed class SimpleCSSCompiler
         string[] bSelectors = before.Split(',');
 
         if (before.Length == 0)
-            return current;
+        {
+            sb.Append(current);
+            goto finish;
+        }
 
         foreach (string C in cSelectors)
         {
@@ -179,7 +212,12 @@ public sealed class SimpleCSSCompiler
         }
 
         sb.Length--;
-        return sb.ToString();
+
+    finish:
+        string[] parts = sb.ToString()
+            .Split(new char[] { ' ', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return string.Join(' ', parts);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,13 +257,28 @@ public sealed class SimpleCSSCompiler
 
         int keyState = 0;
         string mounting = "";
-        string propKey = "";
+
+        bool inSingleString = false;
+        bool inDoubleString = false;
 
         string body = ruleStr.Substring(openingTagIndex + 1);
         for (int i = 0; i < body.Length; i++)
         {
             char c = body[i];
+            char b = body[Math.Max(0, i - 1)];
             mounting += c;
+
+            if (c == '\'' && b != '\\')
+            {
+                inSingleString = !inSingleString;
+            }
+            else if (c == '"' && b != '\\')
+            {
+                inDoubleString = !inDoubleString;
+            }
+
+            if (inSingleString || inDoubleString)
+                continue;
 
             if (c == '{')
             {
@@ -237,30 +290,26 @@ public sealed class SimpleCSSCompiler
                 if (keyState == 0)
                 {
                     ParseRule(mounting, rule.Selector);
-                    propKey = "";
                     mounting = "";
                     continue;
                 }
             }
-
-            if (keyState > 0) continue;
-
-            if (c == ':' && IsProperty(mounting) && propKey == "")
+            else if (c == ';' && keyState == 0)
             {
-                propKey = mounting;
-                mounting = "";
-            }
-            else if (c == ';')
-            {
-                string name = propKey.Trim().TrimEnd(':'), value = mounting.Trim().TrimEnd(';');
-                rule.Properties.Add(name, value);
-                propKey = "";
-                mounting = "";
+                string declaration = mounting.Substring(0, mounting.Length - 1).Trim();
+                int sepIndex = declaration.IndexOf(':');
+                if (sepIndex > 0)
+                {
+                    string propKey = declaration.Substring(0, sepIndex).Trim();
+                    string propValue = declaration.Substring(sepIndex + 1).Trim();
+                    rule.Properties.Add(propKey, propValue);
+                    mounting = "";
+                }
             }
         }
 
         if (rule.Properties.Count > 0)
-            Rules.Insert(0, rule);
+            Rules.Add(rule);
     }
 
     private static string PrepareString(string input)
