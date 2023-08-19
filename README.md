@@ -1,4 +1,8 @@
-# Simple CSS compiler
+<p align="center">
+  <img width="100%" height="auto" src="./.github/banner.png">
+</p>
+
+------
 
 This small module can compile CSS with the following features into a legacy CSS file that is more compatible with most browsers.
 
@@ -69,7 +73,7 @@ div > a:hover {
 Only with:
 
 ```c#
-string css = CypherPotato.SimpleCSSCompiler.Compile(prettyCss);
+string css = SimpleCSS.SimpleCSSCompiler.Compile(prettyCss);
 ```
 
 It's all you need.
@@ -154,6 +158,46 @@ div {
     }
 }
 ```
+
+## Additional options
+
+You can specify compilation options under the `CSSCompilerOptions` parameter, which:
+
+- `bool Pretty` produces an pretty, formatted and indented output.
+- `bool UseVarShortcut` specifies if the compiler should rewrite `--variable` to `var(--variable)` in the value context, example:
+
+    ```css
+    :root {
+        --red: #FF1100;        
+    }
+
+    div {
+        color: --red;      
+    }
+    ```
+
+    Should be rewrited to:
+
+    ```css
+    div {
+        color: var(--red);
+    }
+    ```
+
+    And it will NOT rewrite if the variable is inside an string:
+
+    ```scss
+    div {
+        color: --red;
+        background: url('--red');
+    }
+
+    // becomes:
+    div {
+        color: var(--red);
+        background: url('--red');
+    }
+    ```
 
 ## Considerations
 

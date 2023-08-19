@@ -1,8 +1,7 @@
-﻿
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace CypherPotato;
+namespace SimpleCSS;
 
 /// <summary>
 /// Provides a CSS compiler that compiles higher-level code with single-line comments, nesting into a legacy CSS file.
@@ -13,6 +12,7 @@ public sealed class SimpleCSSCompiler
     {
         public string? Selector { get; set; }
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+        public override String ToString() => $"{Selector} [{Properties.Count}]";
     }
 
     private string? AtRule { get; set; }
@@ -167,6 +167,7 @@ public sealed class SimpleCSSCompiler
                     if (isAtRule)
                     {
                         ParseAtRule(sb.ToString());
+                        isAtRule = false;
                     }
                     else
                     {
@@ -249,6 +250,21 @@ public sealed class SimpleCSSCompiler
     {
         ruleStr = ruleStr.Trim();
         CssRule rule = new CssRule();
+        string mounting = "";
+
+        void SetDeclaration()
+        {
+            string declaration = mounting.Substring(0, mounting.Length - 1).Trim();
+            int sepIndex = declaration.IndexOf(':');
+            if (sepIndex > 0)
+            {
+                string propKey = declaration.Substring(0, sepIndex).Trim();
+                string propValue = declaration.Substring(sepIndex + 1).Trim();
+                propValue = PrepareValue(propValue);
+                rule.Properties[propKey] = propValue;
+                mounting = "";
+            }
+        }
 
         int openingTagIndex = ruleStr.IndexOf('{');
 
@@ -256,7 +272,6 @@ public sealed class SimpleCSSCompiler
         rule.Selector = FormatSelector(rule.Selector, baseSelector);
 
         int keyState = 0;
-        string mounting = "";
 
         bool inSingleString = false;
         bool inDoubleString = false;
@@ -265,7 +280,7 @@ public sealed class SimpleCSSCompiler
         for (int i = 0; i < body.Length; i++)
         {
             char c = body[i];
-            char b = body[Math.Max(0, i - 1)];
+            char b = i > 0 ? body[i - 1] : '\0';
             mounting += c;
 
             if (c == '\'' && b != '\\')
@@ -296,20 +311,77 @@ public sealed class SimpleCSSCompiler
             }
             else if (c == ';' && keyState == 0)
             {
-                string declaration = mounting.Substring(0, mounting.Length - 1).Trim();
-                int sepIndex = declaration.IndexOf(':');
-                if (sepIndex > 0)
-                {
-                    string propKey = declaration.Substring(0, sepIndex).Trim();
-                    string propValue = declaration.Substring(sepIndex + 1).Trim();
-                    rule.Properties.Add(propKey, propValue);
-                    mounting = "";
-                }
+                SetDeclaration();
             }
+        }
+
+        if (mounting.Length > 0 && mounting.Contains(':') && mounting.EndsWith('}'))
+        {
+            SetDeclaration();
         }
 
         if (rule.Properties.Count > 0)
             Rules.Add(rule);
+    }
+
+    private string PrepareValue(string value)
+    {
+        if (Options?.UseVarShortcut == true)
+        {
+            StringBuilder output = new StringBuilder();
+            char[] chars = value.ToCharArray();
+            bool inSingleString = false;
+            bool inDoubleString = false;
+            bool isParsingVarname = false;
+
+            for (int i = 0; i < chars.Length; i++)
+            {
+                char c = chars[i];
+                char b = i > 0 ? chars[i - 1] : '\0';
+
+                output.Append(c);
+
+                if (c == '\'' && b != '\\')
+                {
+                    inSingleString = !inSingleString;
+                }
+                else if (c == '"' && b != '\\')
+                {
+                    inDoubleString = !inDoubleString;
+                }
+
+                if ((inSingleString || inDoubleString) == false)
+                {
+                    if (c == '-' && b == '-' && output.Length >= 2 && !output.ToString().EndsWith("var(--"))
+                    {
+                        isParsingVarname = true;
+                        output.Length -= 2;
+                        output.Append("var(--");
+                    }
+                    else if (!IsNameChar(c) && isParsingVarname)
+                    {
+                        output.Length--;
+                        output.Append(')');
+                        output.Append(c);
+                        isParsingVarname = false;
+                    }
+                }
+            }
+
+            if (isParsingVarname)
+                output.Append(')');
+
+            return output.ToString();
+        }
+        else
+        {
+            return value;
+        }
+    }
+
+    private static bool IsNameChar(char c)
+    {
+        return Char.IsLetter(c) || Char.IsDigit(c) || c == '_' || c == '-';
     }
 
     private static string PrepareString(string input)
@@ -329,7 +401,7 @@ public sealed class SimpleCSSCompiler
         for (int i = 0; i < inputChars.Length; i++)
         {
             char current = inputChars[i];
-            char before = inputChars[Math.Max(0, i - 1)];
+            char before = i > 0 ? inputChars[i - 1] : '\0';
 
             if (current == '\'' && before != '\\' && !inDoubleString && !inComment())
             {
@@ -342,18 +414,18 @@ public sealed class SimpleCSSCompiler
             else if (current == '*' && before == '/' && !inString() && !inSinglelineComment)
             {
                 inMultilineComment = true;
-                output.Length--;
+                if (output.Length > 0) output.Length--;
             }
             else if (current == '/' && before == '*' && !inString() && !inSinglelineComment)
             {
                 inMultilineComment = false;
-                output.Length--;
+                if (output.Length > 0) output.Length--;
                 continue;
             }
             else if (current == '/' && before == '/' && !inString() && !inMultilineComment)
             {
                 inSinglelineComment = true;
-                output.Length--;
+                if (output.Length > 0) output.Length--;
             }
             else if (current == '\n' || current == '\r' && !inString() && inSinglelineComment)
             {

@@ -20,9 +20,9 @@
 		<PackageTags>css,scss,sass,less</PackageTags>
 		<RepositoryType>git</RepositoryType>
 
-		<Version>1.0.0-beta</Version>
-		<AssemblyVersion>1.0.0</AssemblyVersion>
-		<FileVersion>1.0.0</FileVersion>
+		<Version>1.0.2-beta</Version>
+		<AssemblyVersion>1.0.2</AssemblyVersion>
+		<FileVersion>1.0.2</FileVersion>
 
 		<NeutralLanguage>en</NeutralLanguage>
 		<IncludeSymbols>True</IncludeSymbols>
@@ -30,11 +30,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include=".\README.md">
+		<None Include="..\README.md">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
-		<None Include=".\LICENSE.txt">
+		<None Include="..\LICENSE.txt">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
