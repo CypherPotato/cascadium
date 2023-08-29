@@ -76,7 +76,7 @@ public sealed class SimpleCSSCompiler
         if (css.AtRule != "")
         {
             if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
-            sb.Append(css.AtRule);
+            sb.Append(css.AtRule?.Trim());
             if (css.Options?.Pretty == true) sb.Append(' ');
             sb.Append('{');
             if (css.Options?.Pretty == true) sb.Append('\n');
@@ -231,7 +231,10 @@ public sealed class SimpleCSSCompiler
 
         if (openingTagIndex >= 0)
         {
-            SimpleCSSCompiler css = new SimpleCSSCompiler();
+            SimpleCSSCompiler css = new SimpleCSSCompiler()
+            {
+                Options = this.Options
+            };
             css.AtRule = ruleStr.Substring(0, openingTagIndex);
             string body = ruleStr
                 .Substring(openingTagIndex + 1, ruleStr.Length - openingTagIndex - 2)
@@ -262,6 +265,7 @@ public sealed class SimpleCSSCompiler
                 string propValue = declaration.Substring(sepIndex + 1).Trim();
                 propValue = PrepareValue(propValue);
                 rule.Properties[propKey] = propValue;
+
                 mounting = "";
             }
         }

@@ -20,9 +20,9 @@
 		<PackageTags>css,scss,sass,less</PackageTags>
 		<RepositoryType>git</RepositoryType>
 
-		<Version>1.0.2-beta</Version>
-		<AssemblyVersion>1.0.2</AssemblyVersion>
-		<FileVersion>1.0.2</FileVersion>
+		<Version>1.0.3</Version>
+		<AssemblyVersion>1.0.3</AssemblyVersion>
+		<FileVersion>1.0.3</FileVersion>
 
 		<NeutralLanguage>en</NeutralLanguage>
 		<IncludeSymbols>True</IncludeSymbols>

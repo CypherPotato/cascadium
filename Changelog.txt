@@ -1,0 +1,4 @@
+v.1.0.3
+---------------------
+- Fixed an bug where UseVarShortcut wasn't working inside @ rules.
+- Fixed an pretty-printing issue on @ blocks.
