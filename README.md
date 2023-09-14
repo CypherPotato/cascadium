@@ -168,15 +168,15 @@ You can specify compilation options under the `CSSCompilerOptions` parameter, wh
 
     ```css
     :root {
-        --red: #FF1100;        
+        --red: #FF1100;
     }
 
     div {
-        color: --red;      
+        color: --red;
     }
     ```
 
-    Should be rewrited to:
+    Will be rewrited to:
 
     ```css
     div {
@@ -199,8 +199,68 @@ You can specify compilation options under the `CSSCompilerOptions` parameter, wh
     }
     ```
 
+## Converters
+
+You can define custom converters which converts properties and values into new ones.
+
+Example:
+
+```cs
+using SimpleCSS;
+
+static void Main(string[] args)
+{
+    string css = """
+        div {
+            size: 100px 400px;
+        }
+        """;
+
+    string pretty = SimpleCSSCompiler.Compile(css, new SimpleCSS.CSSCompilerOptions()
+    {
+        Converters = new()
+        {
+            new CssSizeConverter()
+        }
+    });
+
+    Console.WriteLine(pretty);
+}
+
+public class CssSizeConverter : CSSConverter
+{
+    public override bool CanConvert(string propertyName, string value)
+    {
+        // determines if the property should be converted
+        return propertyName == "size";
+    }
+
+    public override void Convert(string? value, NameValueCollection outputDeclarations)
+    {
+        // get values and remove the default value
+        string[] values = this.SafeSplit(value);
+        value = null;
+
+        // output the new values
+        outputDeclarations.Set("width", values[0]);
+        outputDeclarations.Set("height", values[1]);
+    }
+}
+```
+
+And get the converted output:
+
+```css
+div {
+    width: 100px;
+    height: 400px;
+}
+```
+
+> Note: don't use `string.Split()` to split your values. Use the base `base.SafeSplit()` to split values into expressions, which it supports splitting string and expression literals.
+
 ## Considerations
 
-- Nesting `@` blocks is not supported.
-- Properties and values is trimmed.
-- The last `;` in the rule is removed.
+- Nesting `@` blocks is not supported. Nesting inside `@` blocks is supported.
+- Properties and values have their values trimmed. Empty values are not included in the output.
+- The last `;` in the rule is removed. (except on pretty print mode)

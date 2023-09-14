@@ -14,4 +14,9 @@ public class CSSCompilerOptions
     /// Gets or sets whether the CSS compiler should automatically rewrite <code>--variable</code> to <code>var(--variable)</code>
     /// </summary>
     public bool UseVarShortcut { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets an list of <see cref="CSSConverter"/> which will be used in this CSS Compiler.
+    /// </summary>
+    public List<CSSConverter> Converters { get; set; } = new List<CSSConverter>();
 }

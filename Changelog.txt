@@ -1,3 +1,11 @@
+v.1.0.4
+---------------------
+- Added converters: which allow to convert properties and/or values into another
+values.
+- Fixed an bug where at rules were being recognized on an wrong offset
+on the rule selector name.
+- Fixed an bug where empty declarations were being added to the output.
+
 v.1.0.3
 ---------------------
 - Fixed an bug where UseVarShortcut wasn't working inside @ rules.
