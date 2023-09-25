@@ -7,6 +7,7 @@ public sealed partial class SimpleCSSCompiler
 {
     private void ParseCss(string css)
     {
+        bool selectorStarted = false;
         bool isAtRule = false;
         int keyLevel = 0;
 
@@ -18,7 +19,12 @@ public sealed partial class SimpleCSSCompiler
             char c = chars[i];
             sb.Append(c);
 
-            if (c == '@' && keyLevel == 0 && sb.Length == 1)
+            if (!char.IsWhiteSpace(c))
+            {
+                selectorStarted = true;
+            }
+
+            if (c == '@' && keyLevel == 0 && selectorStarted)
             {
                 isAtRule = true;
             }
@@ -32,8 +38,7 @@ public sealed partial class SimpleCSSCompiler
             {
                 keyLevel++;
             }
-            else
-            if (c == '}')
+            else if (c == '}')
             {
                 keyLevel--;
                 if (keyLevel == 0)
@@ -49,6 +54,7 @@ public sealed partial class SimpleCSSCompiler
                     }
                     sb.Clear();
                 }
+                selectorStarted = false;
             }
         }
     }

@@ -1,3 +1,8 @@
+v.1.0.5
+---------------------
+- Fixed an bug where at rules weren't being added when used more than one
+in the same file.
+
 v.1.0.4
 ---------------------
 - Added converters: which allow to convert properties and/or values into another

@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "tool": {
+      "commandName": "Project",
+      "commandLineArgs": "--watch -o ./dist/app.css --no-pretty",
+      "workingDirectory": "C:\\laragon\\www\\centro-lyra"
+    }
+  }
+}
