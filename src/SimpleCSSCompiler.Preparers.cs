@@ -121,10 +121,22 @@ public sealed partial class SimpleCSSCompiler
     string PrepareSelectorUnit(string s)
     {
         StringBuilder output = new StringBuilder();
-        char[] chars = s.Trim().ToCharArray();
+        char[] chars;
+
+        bool ignoreTrailingSpace = Options == null || Options.KeepNestingSpace == false;
+
+        if (ignoreTrailingSpace)
+        {
+            chars = s.Trim().ToCharArray();
+        } else
+        {
+            chars = s.TrimEnd().ToCharArray();
+        }
+
         bool inSingleString = false;
         bool inDoubleString = false;
         char lastCombinator = '\0';
+
         for (int i = 0; i < chars.Length; i++)
         {
             char c = chars[i];
@@ -145,6 +157,11 @@ public sealed partial class SimpleCSSCompiler
                 continue;
             }
 
+            if(i == 0 && ignoreTrailingSpace && char.IsWhiteSpace(c))
+            {
+                output.Append(c);
+            }
+
             if (combinators.Contains(c) || char.IsWhiteSpace(c))
             {
                 if (char.IsWhiteSpace(lastCombinator) || lastCombinator == '\0')
@@ -154,8 +171,10 @@ public sealed partial class SimpleCSSCompiler
             {
                 bool prettySpace = Options?.Pretty == true && !char.IsWhiteSpace(lastCombinator) && lastCombinator != '\0';
                 if (prettySpace) output.Append(' ');
+
                 if (lastCombinator != '\0')
                     output.Append(lastCombinator);
+
                 if (prettySpace) output.Append(' ');
                 output.Append(c);
                 lastCombinator = '\0';

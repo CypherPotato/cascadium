@@ -6,6 +6,12 @@
 public class CSSCompilerOptions
 {
     /// <summary>
+    /// Gets or sets whether the space between the &amp; operator and the selector
+    /// should be keept.
+    /// </summary>
+    public bool KeepNestingSpace { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets whether the CSS output should be exported indented and well-formatted.
     /// </summary>
     public bool Pretty { get; set; } = false;

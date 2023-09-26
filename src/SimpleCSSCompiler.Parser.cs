@@ -87,7 +87,9 @@ public sealed partial class SimpleCSSCompiler
 
         if (baseSelector != null)
         {
-            ruleStr = ruleStr.Insert(openingTagIndex + baseSelector.Length + 1, baseSelector + '{');
+            ruleStr = ruleStr.Substring(0, openingTagIndex + 1)
+                + baseSelector + '{' + ruleStr.Substring(openingTagIndex + 1);
+
             ruleStr += '}';
         }
 
@@ -267,7 +269,11 @@ public sealed partial class SimpleCSSCompiler
                 if (c.StartsWith('&'))
                 {
                     sb.Append(b);
-                    s = c.Substring(1).TrimStart();
+                    s = c.Substring(1);
+                    if (Options == null || Options.KeepNestingSpace == false)
+                    {
+                        s = s.TrimStart();
+                    }
                 }
                 else
                 {
