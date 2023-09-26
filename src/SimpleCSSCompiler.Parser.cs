@@ -5,8 +5,9 @@ using System.Text;
 namespace SimpleCSS;
 public sealed partial class SimpleCSSCompiler
 {
-    private void ParseCss(string css)
+    private bool ParseCss(string css)
     {
+        bool anyParsed = false;
         bool selectorStarted = false;
         bool isAtRule = false;
         int keyLevel = 0;
@@ -14,15 +15,30 @@ public sealed partial class SimpleCSSCompiler
         StringBuilder sb = new StringBuilder();
         char[] chars = css.ToCharArray();
 
+        bool inSingleString = false;
+        bool inDoubleString = false;
+
         for (int i = 0; i < chars.Length; i++)
         {
-            char c = chars[i];
+            char c = chars[i], b = i > 0 ? chars[i - 1] : '\0'; ;
             sb.Append(c);
 
             if (!char.IsWhiteSpace(c))
             {
                 selectorStarted = true;
             }
+
+            if (c == '\'' && b != '\\')
+            {
+                inSingleString = !inSingleString;
+            }
+            else if (c == '"' && b != '\\')
+            {
+                inDoubleString = !inDoubleString;
+            }
+
+            if (inSingleString || inDoubleString)
+                continue;
 
             if (c == '@' && keyLevel == 0 && selectorStarted)
             {
@@ -52,20 +68,28 @@ public sealed partial class SimpleCSSCompiler
                     {
                         ParseRule(sb.ToString(), "");
                     }
+                    anyParsed = true;
                     sb.Clear();
                 }
                 selectorStarted = false;
             }
         }
+        return anyParsed;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ParseAtRule(string atRuleStr)
+    private void ParseAtRule(in string atRuleStr, string? baseSelector = null)
     {
         string ruleStr = atRuleStr.Trim();
         int openingTagIndex = ruleStr.IndexOf('{');
 
         if (ruleStr.Length == 0) return; // empty @ rule
+
+        if (baseSelector != null)
+        {
+            ruleStr = ruleStr.Insert(openingTagIndex + baseSelector.Length + 1, baseSelector + '{');
+            ruleStr += '}';
+        }
 
         if (openingTagIndex >= 0)
         {
@@ -78,8 +102,18 @@ public sealed partial class SimpleCSSCompiler
                 .Substring(openingTagIndex + 1, ruleStr.Length - openingTagIndex - 2)
                 .Trim();
 
-            css.ParseCss(body);
-            this.Stylesheets.Add(css);
+            bool parseResult = css.ParseCss(body);
+            if (parseResult)
+            {
+                // body was interpreted as an css stylesheet
+                this.Stylesheets.Add(css);
+            }
+            else
+            {
+                // is an at-rule, but not identified as an stylesheet inside it
+                // try to interpret as a rule
+                ParseRule(ruleStr, "");
+            }
         }
         else
         {
@@ -176,7 +210,15 @@ public sealed partial class SimpleCSSCompiler
                 keyState--;
                 if (keyState == 0)
                 {
-                    ParseRule(mounting, rule.Selector);
+                    if (mounting.TrimStart().StartsWith('@'))
+                    {
+                        // at rule inside rule
+                        ParseAtRule(mounting, rule.Selector);
+                    }
+                    else
+                    {
+                        ParseRule(mounting, rule.Selector);
+                    }
                     mounting = "";
                     continue;
                 }
@@ -209,6 +251,8 @@ public sealed partial class SimpleCSSCompiler
                 string prepared = PrepareSelectorUnit(cSelector);
                 sb.Append(prepared);
                 sb.Append(',');
+                if (Options?.Pretty == true)
+                    sb.Append(' ');
             }
             goto finish;
         }
@@ -228,7 +272,7 @@ public sealed partial class SimpleCSSCompiler
                 else
                 {
                     sb.Append(b);
-                    if (!combinators.Contains(c[0]))
+                    if (c.Length != 0 && !combinators.Contains(c[0]))
                     {
                         sb.Append(' ');
                     }
@@ -237,11 +281,14 @@ public sealed partial class SimpleCSSCompiler
                 s = PrepareSelectorUnit(s);
                 sb.Append(s);
                 sb.Append(',');
+                if (Options?.Pretty == true)
+                    sb.Append(' ');
             }
         }
 
     finish:
         sb.Length--;
+        if (Options?.Pretty == true) sb.Length--;
         return sb.ToString();
     }
 }

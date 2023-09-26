@@ -121,7 +121,7 @@ public sealed partial class SimpleCSSCompiler
     string PrepareSelectorUnit(string s)
     {
         StringBuilder output = new StringBuilder();
-        char[] chars = s.ToCharArray();
+        char[] chars = s.Trim().ToCharArray();
         bool inSingleString = false;
         bool inDoubleString = false;
         char lastCombinator = '\0';

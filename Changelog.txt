@@ -1,3 +1,11 @@
+v.1.0.6
+---------------------
+- Added experimental support for nesting at-rules inside rules.
+- Fixed some formatting bugs on selectors.
+- Fixed an bug where at rules weren't being added if the root node is an
+rule.
+- Fixed the xcss `--watch` mode.
+
 v.1.0.5
 ---------------------
 - Fixed an bug where at rules weren't being added when used more than one

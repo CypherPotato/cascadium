@@ -34,6 +34,12 @@ public sealed partial class SimpleCSSCompiler
             sb.Append('{');
             if (css.Options?.Pretty == true) sb.Append('\n');
         }
+        foreach (string decl in css.Declarations)
+        {
+            if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel + 1 * 4));
+            sb.Append(decl);
+            if (css.Options?.Pretty == true) sb.Append("\n");
+        }
         ExportRules(sb, css, indentLevel + 1);
         if (css.Options?.Pretty == true) TrimEndSb(sb);
         if (css.AtRule != "")
@@ -50,7 +56,7 @@ public sealed partial class SimpleCSSCompiler
         foreach (var rule in css.Rules)
         {
             if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
-            sb.Append(rule.Selector);
+            sb.Append(rule.Selector); 
             if (css.Options?.Pretty == true) sb.Append(' ');
             sb.Append('{');
             if (css.Options?.Pretty == true) sb.Append('\n');

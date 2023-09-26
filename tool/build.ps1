@@ -1,4 +1,4 @@
-$version = "v.0.1"
+$version = "v.1.0.5.12"
 
 $archs = @(
     "win-x64",
@@ -17,7 +17,7 @@ foreach ($arch in $archs) {
 
     # build
     & dotnet publish "$dir/xcss.csproj" --nologo -v quiet -r $arch -c Release `
-        -o ""$dir/bin/dist/$nameTag/"" /p:DebugType=None /p:DebugSymbols=false
+        -o ""$dir/bin/dist/$nameTag/"" --self-contained false -p:DebugType=None -p:DebugSymbols=false
     
     # zip 
     & 7z a "$dir/bin/dist/$nameTag.zip" "$dir/bin/dist/$nameTag/" | Select-String "Error" -Context 10

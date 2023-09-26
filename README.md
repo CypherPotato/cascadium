@@ -161,43 +161,7 @@ div {
 
 ## Additional options
 
-You can specify compilation options under the `CSSCompilerOptions` parameter, which:
 
-- `bool Pretty` produces an pretty, formatted and indented output.
-- `bool UseVarShortcut` specifies if the compiler should rewrite `--variable` to `var(--variable)` in the value context, example:
-
-    ```css
-    :root {
-        --red: #FF1100;
-    }
-
-    div {
-        color: --red;
-    }
-    ```
-
-    Will be rewrited to:
-
-    ```css
-    div {
-        color: var(--red);
-    }
-    ```
-
-    And it will NOT rewrite if the variable is inside an string:
-
-    ```scss
-    div {
-        color: --red;
-        background: url('--red');
-    }
-
-    // becomes:
-    div {
-        color: var(--red);
-        background: url('--red');
-    }
-    ```
 
 ## Converters
 

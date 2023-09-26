@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Caching;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +11,6 @@ namespace tool;
 
 internal static class Watcher
 {
-    private static MemoryCache watcherCache = new MemoryCache("xcss-mem-cache");
     private static FileSystemWatcher fsWatcher = new FileSystemWatcher();
     private static CommandLineArguments watchArgs = null!;
     private static string[] watchingDirectories = Array.Empty<string>();    
@@ -62,9 +61,9 @@ internal static class Watcher
         return 0;
     }
 
+    [MethodImpl(MethodImplOptions.Synchronized)]
     private static void FsWatcher_Changed(Object sender, FileSystemEventArgs e)
     {
-        if (watcherCache.Get(e.FullPath) != null) return;
         string file = e.FullPath;
         string ext = Path.GetExtension(file);
         if (ext != ".xcss" && !watchArgs.Extensions.Contains(ext))
@@ -77,7 +76,6 @@ internal static class Watcher
         if (!isDirIncluded)
             return;
 
-        watcherCache.Add(e.FullPath, true, new CacheItemPolicy() { SlidingExpiration = TimeSpan.FromMilliseconds(500) });
 
         try
         {
@@ -87,6 +85,9 @@ internal static class Watcher
         {
             // The process cannot access the file <name> because it is being used by another process.
             return;
+        } finally
+        {
+            Thread.Sleep(500);
         }
     }
 }
