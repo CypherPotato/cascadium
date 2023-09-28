@@ -28,50 +28,6 @@ public abstract class CSSConverter
     /// <param name="value">The raw CSS value.</param>
     public string[] SafeSplit(string? value)
     {
-        if (value == null) return Array.Empty<string>();
-        List<string> output = new List<string>();
-        StringBuilder mounting = new StringBuilder();
-        bool inSingleString = false;
-        bool inDoubleString = false;
-        int expressionIndex = 0;
-
-        for (int i = 0; i < value.Length; i++)
-        {
-            char c = value[i];
-            char b = i > 0 ? value[i - 1] : '\0';
-            mounting.Append(c);
-
-            if (c == '\'' && b != '\\')
-            {
-                inSingleString = !inSingleString;
-            }
-            else if (c == '"' && b != '\\')
-            {
-                inDoubleString = !inDoubleString;
-            }
-            else if (c == '(' && !(inDoubleString || inSingleString))
-            {
-                expressionIndex++;
-            }
-            else if (c == ')' && !(inDoubleString || inSingleString))
-            {
-                expressionIndex--;
-            }
-
-            if ((inDoubleString || inSingleString) == false && expressionIndex == 0)
-            {
-                if (c == ' ')
-                {
-                    mounting.Length--;
-                    output.Add(mounting.ToString());
-                    mounting.Clear();
-                }
-            }
-        }
-
-        if (mounting.Length > 0)
-            output.Add(mounting.ToString());
-
-        return output.ToArray();
+        return SimpleCSSCompiler.SafeSplit(value, ' ');
     }
 }

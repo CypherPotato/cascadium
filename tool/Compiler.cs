@@ -25,10 +25,11 @@ internal class Compiler
 
         CSSCompilerOptions options = new SimpleCSS.CSSCompilerOptions()
         {
-            Pretty = !args.NoPretty,
-            UseVarShortcut = !args.NoUseVarShortcuts
+            Pretty = args.Pretty == BoolType.True,
+            UseVarShortcut = args.UseVarShortcuts == BoolType.True,
+            KeepNestingSpace = args.KeepNestingSpace == BoolType.True,
         };
-        
+
         if (!string.IsNullOrEmpty(stdin))
         {
             anyCompiled = true;
@@ -86,11 +87,12 @@ internal class Compiler
                     compiled.Append(result);
                 }
 
-                if(outputFile != null)
+                if (outputFile != null)
                 {
                     File.WriteAllText(outputFile, compiled.ToString());
                     Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} [{PathUtils.FileSize(compiled.Length)}]");
-                } else
+                }
+                else
                 {
                     Console.Write(compiled.ToString());
                 }

@@ -7,10 +7,12 @@
 		<Nullable>enable</Nullable>
 		<AssemblyName>xcss</AssemblyName>
 		<PublishSingleFile>true</PublishSingleFile>
+		<PublishTrimmed>true</PublishTrimmed>
 		<PublishReadyToRun>true</PublishReadyToRun>
+		<InvariantGlobalization>true</InvariantGlobalization>
 
-		<AssemblyVersion>1.0.5.12</AssemblyVersion>
-		<FileVersion>1.0.5.12</FileVersion>
+		<AssemblyVersion>1.0.6.13</AssemblyVersion>
+		<FileVersion>1.0.6.13</FileVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

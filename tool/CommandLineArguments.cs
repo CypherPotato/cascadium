@@ -25,12 +25,21 @@ internal class CommandLineArguments
     [Option("stdin", HelpText = "Specifies that the stdin should be included as an input.")]
     public bool StdIn { get; set; } = false;
 
-    [Option("no-pretty", HelpText = "Specifies if the output should NOT generate an pretty, indented and formatted code.")]
-    public bool NoPretty { get; set; } = false;
+    [Option("p:Pretty", Default = BoolType.True, HelpText = "Specifies whether the compiler should generate an pretty, indented and formatted code.")]
+    public BoolType Pretty { get; set; }
 
-    [Option("no-varshortcuts", HelpText = "Specifies if the output should NOT rewrite variable shortcuts.")]
-    public bool NoUseVarShortcuts { get; set; } = false;
+    [Option("p:UseVarShortcut", Default = BoolType.True, HelpText = "Specifies whether the compiler should rewrite variable shortcuts.")]
+    public BoolType UseVarShortcuts { get; set; }
+
+    [Option("p:KeepNestingSpace", Default = BoolType.False, HelpText = "Specifies whether the compiler should keep spaces after the & operator.")]
+    public BoolType KeepNestingSpace { get; set; }
 
     [Option("watch", HelpText = "Specifies if the compiler should watch for file changes and rebuild on each save.")]
     public bool Watch { get; set; } = false;
+}
+
+public enum BoolType
+{
+    False,
+    True
 }

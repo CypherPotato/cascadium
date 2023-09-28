@@ -243,8 +243,8 @@ public sealed partial class SimpleCSSCompiler
     private string JoinSelector(string current, string before)
     {
         StringBuilder sb = new StringBuilder();
-        string[] cSelectors = current.Split(',');
-        string[] bSelectors = before.Split(',');
+        string[] cSelectors = SafeSplit(current, ',');
+        string[] bSelectors = SafeSplit(before, ',');
 
         if (before.Length == 0)
         {

@@ -1,3 +1,8 @@
+v.1.0.7
+---------------------
+- Fixed an bug where `,` inside selectors functions, like `:is(:focus, :active)`, was causing
+an wrong split in the output.
+
 v.1.0.6
 ---------------------
 - Added experimental support for nesting at-rules inside rules.
