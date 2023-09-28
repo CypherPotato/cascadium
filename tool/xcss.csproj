@@ -11,8 +11,8 @@
 		<PublishReadyToRun>true</PublishReadyToRun>
 		<InvariantGlobalization>true</InvariantGlobalization>
 
-		<AssemblyVersion>1.0.6.13</AssemblyVersion>
-		<FileVersion>1.0.6.13</FileVersion>
+		<AssemblyVersion>1.0.7.14</AssemblyVersion>
+		<FileVersion>1.0.7.14</FileVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
