@@ -1,4 +1,4 @@
-$version = "v.1.0.7.14"
+$version = "v.1.0.8.15"
 
 $archs = @(
     "win-x64",

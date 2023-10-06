@@ -22,11 +22,11 @@ public sealed partial class SimpleCSSCompiler
             char b = i > 0 ? value[i - 1] : '\0';
             mounting.Append(c);
 
-            if (c == '\'' && b != '\\')
+            if (c == '\'' && b != '\\' && !inDoubleString)
             {
                 inSingleString = !inSingleString;
             }
-            else if (c == '"' && b != '\\')
+            else if (c == '"' && b != '\\' && !inSingleString)
             {
                 inDoubleString = !inDoubleString;
             }

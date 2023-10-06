@@ -4,12 +4,13 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
-namespace tool;
+namespace xcss;
 
 internal class Program
 {
     public static string CurrentDirectory { get; } = Directory.GetCurrentDirectory();
     public static bool HasRootConfiguration { get; private set; }
+    public static JsonCssCompilerOptions? CompilerOptions { get; set; }
 
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CommandLineArguments))]
     static int Main(string[] args)
@@ -22,12 +23,13 @@ internal class Program
             with.CaseInsensitiveEnumValues = true;
             with.MaximumDisplayWidth = Console.BufferWidth;
             with.IgnoreUnknownArguments = false;
+            with.CaseSensitive = false;
         });
 
         int errorcode = 0;
         var result = parser.ParseArguments<CommandLineArguments>(args);
-        
-        if(args.Length == 0)
+
+        if (args.Length == 0)
         {
             Console.WriteLine(HelpText.AutoBuild(result, _ => _, _ => _));
             return -1;
@@ -59,6 +61,13 @@ internal class Program
 
     public static void RunParsed(CommandLineArguments args, out int errorcode)
     {
+        if (args.ConfigFile != null)
+        {
+            CompilerOptions = JsonCssCompilerOptions.Create(args.ConfigFile);
+        }
+
+        args.Import(CompilerOptions);
+
         if (args.Watch)
         {
             errorcode = Watcher.Watch(args);

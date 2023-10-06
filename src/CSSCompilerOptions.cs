@@ -1,4 +1,7 @@
-﻿namespace SimpleCSS;
+﻿using SimpleCSS.Converters;
+using System.Collections.Specialized;
+
+namespace SimpleCSS;
 
 /// <summary>
 /// Specifies compilation properties for CSS generation in <see cref="SimpleCSSCompiler"/>.
@@ -25,4 +28,9 @@ public class CSSCompilerOptions
     /// Gets or sets an list of <see cref="CSSConverter"/> which will be used in this CSS Compiler.
     /// </summary>
     public List<CSSConverter> Converters { get; set; } = new List<CSSConverter>();
+
+    /// <summary>
+    /// Gets or sets an list of @-rules which will be replaced by the specified values.
+    /// </summary>
+    public NameValueCollection AtRulesRewrites { get; set; } = new NameValueCollection();
 }

@@ -4,9 +4,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace tool;
+namespace xcss;
 
 internal class Compiler
 {
@@ -15,7 +18,7 @@ internal class Compiler
         string? stdin = null;
         bool anyCompiled = false;
 
-        if (Console.IsInputRedirected)
+        if (Console.IsInputRedirected && args.StdIn)
         {
             using (var reader = new StreamReader(Console.OpenStandardInput(), Console.InputEncoding))
             {
@@ -30,6 +33,8 @@ internal class Compiler
             KeepNestingSpace = args.KeepNestingSpace == BoolType.True,
         };
 
+        Program.CompilerOptions?.ApplyConfiguration(options);
+
         if (!string.IsNullOrEmpty(stdin))
         {
             anyCompiled = true;
@@ -41,6 +46,13 @@ internal class Compiler
             List<string> includedExtensions = new List<string>() { ".xcss" };
             List<string> inputFiles = new List<string>();
 
+            string? outputFile = null;
+            if (!string.IsNullOrEmpty(args.OutputFile))
+            {
+                outputFile = PathUtils.ResolvePath(args.OutputFile);
+                PathUtils.EnsureExistence(Path.GetDirectoryName(outputFile)!);
+            }
+
             if (args.Extensions.Any())
                 includedExtensions.AddRange(args.Extensions);
 
@@ -50,6 +62,9 @@ internal class Compiler
 
                 if (!File.Exists(fullPath))
                     return Log.ErrorKill($"the specified input file \"{f}\" was not found.");
+
+                if (string.Compare(fullPath, outputFile, true) == 0)
+                    continue;
 
                 inputFiles.Add(fullPath);
             }
@@ -65,19 +80,21 @@ internal class Compiler
                     .Where(df => includedExtensions.Contains(Path.GetExtension(df)))
                     .ToArray();
 
-                inputFiles.AddRange(allFiles);
+                inputFiles.AddRange(allFiles
+                    .Where(f => string.Compare(f, outputFile, true) != 0));
+            }
+
+            // exclude patterns
+            foreach (Regex exRegex in args.CompiledExcludes)
+            {
+                inputFiles = inputFiles
+                    .Where(i => !exRegex.IsMatch(i))
+                    .ToList();
             }
 
             if (inputFiles.Count > 0)
             {
                 anyCompiled = true;
-
-                string? outputFile = null;
-                if (!string.IsNullOrEmpty(args.OutputFile))
-                {
-                    outputFile = PathUtils.ResolvePath(args.OutputFile);
-                    PathUtils.EnsureExistence(Path.GetDirectoryName(outputFile)!);
-                }
 
                 StringBuilder compiled = new StringBuilder();
                 foreach (string f in inputFiles)

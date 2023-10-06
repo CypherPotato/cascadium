@@ -1,3 +1,10 @@
+v.1.0.8
+---------------------
+- New feature: at-rules rewriters.
+- New feature: converters, which works like mixins.
+- Fixed parsing bugs:
+    - when a string was not terminated in the selector.
+
 v.1.0.7
 ---------------------
 - Fixed an bug where `,` inside selectors functions, like `:is(:focus, :active)`, was causing

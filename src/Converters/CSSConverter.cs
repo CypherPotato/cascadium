@@ -1,7 +1,7 @@
 ﻿using System.Collections.Specialized;
 using System.Text;
 
-namespace SimpleCSS;
+namespace SimpleCSS.Converters;
 
 /// <summary>
 /// Provides an utility for converting CSS properties and/or values.

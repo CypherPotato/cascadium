@@ -7,13 +7,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace tool;
+namespace xcss;
 
 internal static class Watcher
 {
     private static FileSystemWatcher fsWatcher = new FileSystemWatcher();
     private static CommandLineArguments watchArgs = null!;
-    private static string[] watchingDirectories = Array.Empty<string>();    
+    private static string[] watchingDirectories = Array.Empty<string>();
 
     public static int Watch(CommandLineArguments args)
     {
@@ -33,7 +33,6 @@ internal static class Watcher
         string? smallestPath = null;
         if (paths.Count == 0)
         {
-            Log.Info("No directory was included to watch. Using the current directory instead.");
             paths.Add(Program.CurrentDirectory);
             args.InputDirectories = new string[1] { Program.CurrentDirectory };
         }
@@ -57,6 +56,8 @@ internal static class Watcher
         Log.Info("xcss is watching for file changes");
         Log.LoggingEnabled = false;
 
+        Compiler.RunCompiler(args);
+
         Thread.Sleep(-1);
         return 0;
     }
@@ -64,6 +65,13 @@ internal static class Watcher
     [MethodImpl(MethodImplOptions.Synchronized)]
     private static void FsWatcher_Changed(Object sender, FileSystemEventArgs e)
     {
+        string outFile = PathUtils.ResolvePath(watchArgs.OutputFile);
+        if(outFile == e.FullPath)
+        {
+            // avoid compiling the out file
+            return;
+        }
+
         string file = e.FullPath;
         string ext = Path.GetExtension(file);
         if (ext != ".xcss" && !watchArgs.Extensions.Contains(ext))
@@ -71,21 +79,22 @@ internal static class Watcher
             return;
         }
         bool isDirIncluded = false;
+
         foreach (string includedDir in watchingDirectories)
             isDirIncluded |= file.StartsWith(includedDir);
         if (!isDirIncluded)
             return;
 
-
         try
         {
             Compiler.RunCompiler(watchArgs);
-
-        } catch (System.IO.IOException)
+        }
+        catch (System.IO.IOException)
         {
             // The process cannot access the file <name> because it is being used by another process.
             return;
-        } finally
+        }
+        finally
         {
             Thread.Sleep(500);
         }

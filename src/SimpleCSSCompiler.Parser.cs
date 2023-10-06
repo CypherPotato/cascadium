@@ -1,6 +1,7 @@
 ﻿using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Text;
+using SimpleCSS.Converters;
 
 namespace SimpleCSS;
 public sealed partial class SimpleCSSCompiler
@@ -28,11 +29,11 @@ public sealed partial class SimpleCSSCompiler
                 selectorStarted = true;
             }
 
-            if (c == '\'' && b != '\\')
+            if (c == '\'' && b != '\\' && !inDoubleString)
             {
                 inSingleString = !inSingleString;
             }
-            else if (c == '"' && b != '\\')
+            else if (c == '"' && b != '\\' && !inSingleString)
             {
                 inDoubleString = !inDoubleString;
             }
@@ -99,7 +100,21 @@ public sealed partial class SimpleCSSCompiler
             {
                 Options = this.Options
             };
+
             css.AtRule = ruleStr.Substring(0, openingTagIndex);
+
+            if (Options != null)
+            {
+                string sanitized = css.AtRule.Trim().TrimStart('@');
+                foreach (string atRule in Options.AtRulesRewrites)
+                {
+                    if (string.Compare(atRule, sanitized, true) == 0)
+                    {
+                        css.AtRule = "@" + Options.AtRulesRewrites[atRule];
+                    }
+                }
+            }
+
             string body = ruleStr
                 .Substring(openingTagIndex + 1, ruleStr.Length - openingTagIndex - 2)
                 .Trim();
@@ -191,11 +206,11 @@ public sealed partial class SimpleCSSCompiler
             char b = i > 0 ? body[i - 1] : '\0';
             mounting += c;
 
-            if (c == '\'' && b != '\\')
+            if (c == '\'' && b != '\\'  && !inDoubleString)
             {
                 inSingleString = !inSingleString;
             }
-            else if (c == '"' && b != '\\')
+            else if (c == '"' && b != '\\' && !inSingleString)
             {
                 inDoubleString = !inDoubleString;
             }

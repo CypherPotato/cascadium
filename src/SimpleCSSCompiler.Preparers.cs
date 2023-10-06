@@ -80,11 +80,11 @@ public sealed partial class SimpleCSSCompiler
 
                 output.Append(c);
 
-                if (c == '\'' && b != '\\')
+                if (c == '\'' && b != '\\' && !inDoubleString)
                 {
                     inSingleString = !inSingleString;
                 }
-                else if (c == '"' && b != '\\')
+                else if (c == '"' && b != '\\' && !inSingleString)
                 {
                     inDoubleString = !inDoubleString;
                 }
@@ -142,11 +142,11 @@ public sealed partial class SimpleCSSCompiler
             char c = chars[i];
             char b = i > 0 ? chars[i - 1] : '\0';
 
-            if (c == '\'' && b != '\\')
+            if (c == '\'' && b != '\\' && !inDoubleString)
             {
                 inSingleString = !inSingleString;
             }
-            else if (c == '"' && b != '\\')
+            else if (c == '"' && b != '\\' && !inSingleString)
             {
                 inDoubleString = !inDoubleString;
             }
