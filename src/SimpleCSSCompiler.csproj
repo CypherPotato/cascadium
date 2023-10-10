@@ -14,7 +14,7 @@
 		<Authors>CypherPotato</Authors>
 		<Company>Project Principium</Company>
 		<Product>SimpleCSSCompiler</Product>
-		<Description>Provides a CSS compiler that compiles higher-level code with single-line comments, nesting into a legacy CSS file.</Description>
+		<Description>Provides a CSS compiler that compiles higher-level code with single-line comments, nesting and more into a legacy CSS file.</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/CypherPotato/simple-css-compiler</RepositoryUrl>
 		<PackageTags>css,scss,sass,less</PackageTags>
