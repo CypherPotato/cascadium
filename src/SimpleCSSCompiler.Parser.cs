@@ -206,7 +206,7 @@ public sealed partial class SimpleCSSCompiler
             char b = i > 0 ? body[i - 1] : '\0';
             mounting += c;
 
-            if (c == '\'' && b != '\\'  && !inDoubleString)
+            if (c == '\'' && b != '\\' && !inDoubleString)
             {
                 inSingleString = !inSingleString;
             }
@@ -308,8 +308,8 @@ public sealed partial class SimpleCSSCompiler
         }
 
     finish:
-        sb.Length--;
-        if (Options?.Pretty == true) sb.Length--;
+        if (sb.Length > 0) sb.Length--;
+        if (sb.Length > 0 && Options?.Pretty == true) sb.Length--;
         return sb.ToString();
     }
 }
