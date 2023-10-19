@@ -1,4 +1,4 @@
-﻿using SimpleCSS;
+﻿using Cascadium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,7 +50,7 @@ internal class AtRulesTest1 : SimpleCssTest
         }
         """;
 
-    public override CSSCompilerOptions Options { get; set; } = new CSSCompilerOptions()
+    public override CascadiumOptions Options { get; set; } = new CascadiumOptions()
     {
         UseVarShortcut = true,
         AtRulesRewrites = new System.Collections.Specialized.NameValueCollection()

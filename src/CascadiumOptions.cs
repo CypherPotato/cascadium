@@ -1,12 +1,12 @@
-﻿using SimpleCSS.Converters;
+﻿using Cascadium.Converters;
 using System.Collections.Specialized;
 
-namespace SimpleCSS;
+namespace Cascadium;
 
 /// <summary>
-/// Specifies compilation properties for CSS generation in <see cref="SimpleCSSCompiler"/>.
+/// Specifies compilation properties for CSS generation in <see cref="CascadiumCompiler"/>.
 /// </summary>
-public class CSSCompilerOptions
+public class CascadiumOptions
 {
     /// <summary>
     /// Gets or sets whether the space between the &amp; operator and the selector
@@ -33,4 +33,9 @@ public class CSSCompilerOptions
     /// Gets or sets an list of @-rules which will be replaced by the specified values.
     /// </summary>
     public NameValueCollection AtRulesRewrites { get; set; } = new NameValueCollection();
+
+    /// <summary>
+    /// Gets or sets whether equals rules and at-rules declarations should be merged or not.
+    /// </summary>
+    public bool Merge { get; set; } = false;
 }

@@ -1,5 +1,5 @@
-﻿using SimpleCSS;
-using SimpleCSS.Converters;
+﻿using Cascadium;
+using Cascadium.Converters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,10 +26,10 @@ internal class ConvertersTest1 : SimpleCssTest
         }
         """;
 
-    public override CSSCompilerOptions Options { get; set; } = new CSSCompilerOptions()
+    public override CascadiumOptions Options { get; set; } = new CascadiumOptions()
     {
         UseVarShortcut = true,
-        Converters = new List<SimpleCSS.Converters.CSSConverter>()
+        Converters = new List<Cascadium.Converters.CSSConverter>()
         {
             new StaticCSSConverter()
             {

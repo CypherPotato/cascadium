@@ -1,7 +1,8 @@
-﻿using System.Collections.Specialized;
+﻿using Cascadium.Compiler;
+using System.Collections.Specialized;
 using System.Text;
 
-namespace SimpleCSS.Converters;
+namespace Cascadium.Converters;
 
 /// <summary>
 /// Provides an utility for converting CSS properties and/or values.
@@ -28,6 +29,6 @@ public abstract class CSSConverter
     /// <param name="value">The raw CSS value.</param>
     public string[] SafeSplit(string? value)
     {
-        return SimpleCSSCompiler.SafeSplit(value, ' ');
+        return Split.StSafeSplit(value, ' ');
     }
 }

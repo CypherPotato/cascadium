@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace xcss;
+namespace cssimple;
 internal static class Log
 {
     public static bool LoggingEnabled { get; set; } = true;

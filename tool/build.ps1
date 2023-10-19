@@ -1,4 +1,7 @@
-$version = "v.1.0.8.15"
+# you gotta need 7z installed in order to build
+# cascadium
+
+$version = "v.0.1.0"
 
 $archs = @(
     "win-x64",
@@ -12,14 +15,14 @@ $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dir = $dir.Replace('\', '/')
 
 foreach ($arch in $archs) {
-    $nameTag = "xcss-$version-$arch"
+    $nameTag = "cascadium-$version-$arch"
     Write-Host "Building $nameTag..."
 
     # build
-    & dotnet publish "$dir/xcss.csproj" --nologo -v quiet -r $arch -c Release `
+    & dotnet publish "$dir/Cascadium-Utility.csproj" --nologo -v quiet -r $arch -c Release `
         -o ""$dir/bin/dist/$nameTag/"" --self-contained true -p:DebugType=None -p:DebugSymbols=false
-    
-    # zip 
+
+    # zip
     & 7z a "$dir/bin/dist/$nameTag.zip" "$dir/bin/dist/$nameTag/" | Select-String "Error" -Context 10
 }
 

@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace xcss;
+namespace cssimple;
 
 internal class CommandLineArguments
 {
@@ -43,6 +43,9 @@ internal class CommandLineArguments
 
     [Option("p:KeepNestingSpace", Default = BoolType.False, HelpText = "Specifies whether the compiler should keep spaces after the & operator.")]
     public BoolType KeepNestingSpace { get; set; }
+
+    [Option("p:Merge", Default = BoolType.False, HelpText = "Specifies whether the compiler should merge rules and at-rules.")]
+    public BoolType Merge { get; set; }
 
     [Option("watch", HelpText = "Specifies if the compiler should watch for file changes and rebuild on each save.")]
     public bool Watch { get; set; } = false;

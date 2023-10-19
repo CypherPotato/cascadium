@@ -4,10 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleCSS;
-public sealed partial class SimpleCSSCompiler
+namespace Cascadium.Compiler;
+internal class Split : CompilerModule
 {
-    internal static string[] SafeSplit(string? value, char op)
+    internal static Split Shared = new Split(null!);
+
+    public Split(CompilerContext context) : base(context)
+    {
+    }
+
+    internal static string[] StSafeSplit(string? value, char op)
+    {
+        return Shared.SafeSplit(value, op);
+    }
+
+    public string[] SafeSplit(string? value, char op)
     {
         if (value == null) return Array.Empty<string>();
         List<string> output = new List<string>();

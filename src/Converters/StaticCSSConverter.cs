@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace SimpleCSS.Converters;
+namespace Cascadium.Converters;
 
 /// <summary>
 /// Provides an static <see cref="CSSConverter"/> which converts contents

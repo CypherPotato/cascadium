@@ -4,7 +4,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
-namespace xcss;
+namespace cssimple;
 
 internal class Program
 {

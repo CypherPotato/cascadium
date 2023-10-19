@@ -1,17 +1,17 @@
 ﻿using CommandLine.Text;
 using CommandLine;
-using SimpleCSS.Converters;
+using Cascadium.Converters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
-using SimpleCSS;
+using Cascadium;
 using System.Text.Json;
 using System.IO;
 
-namespace xcss;
+namespace cssimple;
 
 [JsonSerializable(typeof(ICollection<string>))]
 [JsonSerializable(typeof(string))]
@@ -31,6 +31,8 @@ internal class JsonCssCompilerOptions
     public bool? KeepNestingSpace { get; set; }
     public bool? Pretty { get; set; }
     public bool? UseVarShortcut { get; set; }
+    public bool? Merge { get; set; }
+
     public IEnumerable<StaticCSSConverter> Converters { get; set; } = Array.Empty<StaticCSSConverter>();
     public Dictionary<string, string> AtRulesRewrites { get; set; } = new Dictionary<string, string>();
     public IEnumerable<string> Extensions { get; set; } = Array.Empty<string>();
@@ -59,7 +61,7 @@ internal class JsonCssCompilerOptions
         return jsonConfig!;
     }
 
-    public void ApplyConfiguration(CSSCompilerOptions compilerOptions)
+    public void ApplyConfiguration(CascadiumOptions compilerOptions)
     {
         compilerOptions.Converters.AddRange(Converters);
 
@@ -67,6 +69,7 @@ internal class JsonCssCompilerOptions
         if (this.UseVarShortcut != null) compilerOptions.UseVarShortcut = this.UseVarShortcut.Value;
         if (this.Pretty != null) compilerOptions.Pretty = this.Pretty.Value;
         if (this.KeepNestingSpace != null) compilerOptions.KeepNestingSpace = this.KeepNestingSpace.Value;
+        if (this.Merge != null) compilerOptions.Merge = this.Merge.Value;
 
         foreach (KeyValuePair<string, string> mediaRw in this.AtRulesRewrites)
         {

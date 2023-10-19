@@ -1,30 +1,46 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 
-namespace SimpleCSS;
-public sealed partial class SimpleCSSCompiler
+namespace Cascadium.Compiler;
+internal class Exporter : CompilerModule
 {
-    private string Export()
+    public Exporter(CompilerContext context) : base(context)
+    {
+    }
+
+    public string Export()
     {
         StringBuilder sb = new StringBuilder();
 
-        foreach (string decl in Declarations)
+        if (this.Options?.Merge == true)
+        {
+            this.Context.Merger.Merge(true, true);
+        }
+
+        foreach (string decl in Context.Declarations)
         {
             sb.Append(decl);
             if (Options?.Pretty == true) sb.Append("\n");
         }
         if (Options?.Pretty == true) sb.Append("\n");
-        ExportRules(sb, this, 0);
-        foreach (SimpleCSSCompiler stylesheet in Stylesheets)
+
+        ExportRules(sb, this.Context, 0);
+
+        foreach (CompilerContext stylesheet in Context.Stylesheets)
         {
             stylesheet.Options = this.Options;
             ExportStylesheet(sb, stylesheet, 0);
         }
 
-        if (Options?.Pretty == true) TrimEndSb(sb);
+        if (Options?.Pretty == true) this.Context.Utils.TrimEndSb(sb);
         return sb.ToString();
     }
 
-    private static void ExportStylesheet(StringBuilder sb, SimpleCSSCompiler css, int indentLevel)
+    public void ExportStylesheet(StringBuilder sb, CompilerContext css, int indentLevel)
     {
         if (css.AtRule != "")
         {
@@ -41,7 +57,7 @@ public sealed partial class SimpleCSSCompiler
             if (css.Options?.Pretty == true) sb.Append("\n");
         }
         ExportRules(sb, css, indentLevel + 1);
-        if (css.Options?.Pretty == true) TrimEndSb(sb);
+        if (css.Options?.Pretty == true) this.Context.Utils.TrimEndSb(sb);
         if (css.AtRule != "")
         {
             if (css.Options?.Pretty == true) sb.Append('\n');
@@ -51,15 +67,16 @@ public sealed partial class SimpleCSSCompiler
         }
     }
 
-    private static void ExportRules(StringBuilder sb, SimpleCSSCompiler css, int indentLevel)
+    private void ExportRules(StringBuilder sb, CompilerContext css, int indentLevel)
     {
-        foreach (var rule in css.Rules)
+        foreach (var rule in css.Rules.OrderBy(r => r.Order))
         {
             if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
-            sb.Append(rule.Selector); 
+            sb.Append(rule.Selector);
             if (css.Options?.Pretty == true) sb.Append(' ');
             sb.Append('{');
             if (css.Options?.Pretty == true) sb.Append('\n');
+
             foreach (KeyValuePair<string, string> property in rule.Properties)
             {
                 if (css.Options?.Pretty == true) sb.Append(new string(' ', (indentLevel + 1) * 4));
@@ -70,6 +87,7 @@ public sealed partial class SimpleCSSCompiler
                 sb.Append(';');
                 if (css.Options?.Pretty == true) sb.Append('\n');
             }
+
             sb.Length--; // remove the last ;
             if (css.Options?.Pretty == true) sb.Append('\n');
             if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));

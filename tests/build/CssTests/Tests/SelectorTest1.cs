@@ -1,4 +1,4 @@
-﻿using SimpleCSS;
+﻿using Cascadium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,5 +28,5 @@ internal class SelectorTest1 : SimpleCssTest
         }
         """;
 
-    public override CSSCompilerOptions Options { get; set; } = new CSSCompilerOptions();
+    public override CascadiumOptions Options { get; set; } = new CascadiumOptions();
 }

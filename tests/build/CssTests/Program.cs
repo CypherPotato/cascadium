@@ -1,5 +1,5 @@
 ﻿using ExCSS;
-using SimpleCSS;
+using Cascadium;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -44,18 +44,18 @@ public abstract class SimpleCssTest
     public abstract string Name { get; }
     public abstract string Description { get; }
     public abstract string Input { get; }
-    public abstract CSSCompilerOptions Options { get; set; }
+    public abstract CascadiumOptions Options { get; set; }
 
     public string Run()
     {
         Options.Pretty = true;
-        string cssPretty = SimpleCSSCompiler.Compile(Input, Options);
+        string cssPretty = Cascadium.CascadiumCompiler.Compile(Input, Options);
         string settings = JsonSerializer.Serialize(Options, new JsonSerializerOptions()
         {
             WriteIndented = true
         });
         Options.Pretty = false;
-        string cssUgly = SimpleCSSCompiler.Compile(Input, Options);
+        string cssUgly = Cascadium.CascadiumCompiler.Compile(Input, Options);
 
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("# " + Name + "\n\n");

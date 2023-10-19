@@ -1,12 +1,21 @@
-﻿using System.Collections.Specialized;
+﻿using Cascadium.Converters;
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Data;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using SimpleCSS.Converters;
+using System.Threading.Tasks;
 
-namespace SimpleCSS;
-public sealed partial class SimpleCSSCompiler
+namespace Cascadium.Compiler;
+internal class Parser : CompilerModule
 {
-    private bool ParseCss(string css)
+    public Parser(CompilerContext context) : base(context)
+    {
+    }
+
+    public bool ParseCss(string css)
     {
         bool anyParsed = false;
         bool selectorStarted = false;
@@ -96,7 +105,7 @@ public sealed partial class SimpleCSSCompiler
 
         if (openingTagIndex >= 0)
         {
-            SimpleCSSCompiler css = new SimpleCSSCompiler()
+            CompilerContext css = new CompilerContext()
             {
                 Options = this.Options
             };
@@ -119,11 +128,11 @@ public sealed partial class SimpleCSSCompiler
                 .Substring(openingTagIndex + 1, ruleStr.Length - openingTagIndex - 2)
                 .Trim();
 
-            bool parseResult = css.ParseCss(body);
+            bool parseResult = css.Parser.ParseCss(body);
             if (parseResult)
             {
                 // body was interpreted as an css stylesheet
-                this.Stylesheets.Add(css);
+                this.Context.Stylesheets.Add(css);
             }
             else
             {
@@ -134,14 +143,18 @@ public sealed partial class SimpleCSSCompiler
         }
         else
         {
-            this.Declarations.Add(ruleStr);
+            this.Context.Declarations.Add(ruleStr);
         }
     }
 
     private void ParseRule(string ruleStr, string baseSelector)
     {
         ruleStr = ruleStr.Trim();
-        CssRule rule = new CssRule();
+        CssRule rule = new CssRule()
+        {
+            Order = Context.StackOrder++
+        };
+
         string mounting = "";
 
         void SetDeclaration()
@@ -153,7 +166,7 @@ public sealed partial class SimpleCSSCompiler
                 bool wasConverted = false;
                 string propKey = declaration.Substring(0, sepIndex).Trim();
                 string? propValue = declaration.Substring(sepIndex + 1).Trim();
-                propValue = PrepareValue(propValue);
+                propValue = Context.Preparers.PrepareValue(propValue);
 
                 if (Options?.Converters != null)
                 {
@@ -252,20 +265,20 @@ public sealed partial class SimpleCSSCompiler
         }
 
         if (rule.Properties.Count > 0)
-            Rules.Add(rule);
+            Context.Rules.Add(rule);
     }
 
     private string JoinSelector(string current, string before)
     {
         StringBuilder sb = new StringBuilder();
-        string[] cSelectors = SafeSplit(current, ',');
-        string[] bSelectors = SafeSplit(before, ',');
+        string[] cSelectors = Context.Split.SafeSplit(current, ',');
+        string[] bSelectors = Context.Split.SafeSplit(before, ',');
 
         if (before.Length == 0)
         {
             foreach (string cSelector in cSelectors)
             {
-                string prepared = PrepareSelectorUnit(cSelector);
+                string prepared = Context.Preparers.PrepareSelectorUnit(cSelector);
                 sb.Append(prepared);
                 sb.Append(',');
                 if (Options?.Pretty == true)
@@ -293,13 +306,13 @@ public sealed partial class SimpleCSSCompiler
                 else
                 {
                     sb.Append(b);
-                    if (c.Length != 0 && !combinators.Contains(c[0]))
+                    if (c.Length != 0 && !CascadiumCompiler.combinators.Contains(c[0]))
                     {
                         sb.Append(' ');
                     }
                     s = c;
                 }
-                s = PrepareSelectorUnit(s);
+                s = Context.Preparers.PrepareSelectorUnit(s);
                 sb.Append(s);
                 sb.Append(',');
                 if (Options?.Pretty == true)

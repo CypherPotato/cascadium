@@ -1,12 +1,18 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace SimpleCSS;
+namespace Cascadium.Compiler;
 
-public sealed partial class SimpleCSSCompiler
+internal class Preparers : CompilerModule
 {
-    private static char[] combinators = new[] { '>', '~', '+' };
+    public Preparers(CompilerContext context) : base(context)
+    {
+    }
 
-    static string PrepareCssInput(string input)
+    public string PrepareCssInput(string input)
     {
         StringBuilder output = new StringBuilder();
 
@@ -63,7 +69,7 @@ public sealed partial class SimpleCSSCompiler
         return output.ToString().Trim();
     }
 
-    string PrepareValue(string value)
+    public string PrepareValue(string value)
     {
         if (Options?.UseVarShortcut == true)
         {
@@ -97,7 +103,7 @@ public sealed partial class SimpleCSSCompiler
                         output.Length -= 2;
                         output.Append("var(--");
                     }
-                    else if (!IsNameChar(c) && isParsingVarname)
+                    else if (!Context.Utils.IsNameChar(c) && isParsingVarname)
                     {
                         output.Length--;
                         output.Append(')');
@@ -118,7 +124,13 @@ public sealed partial class SimpleCSSCompiler
         }
     }
 
-    string PrepareSelectorUnit(string s)
+    public bool IsSelectorsEqual(string? a, string? b)
+    {
+        if (a == null || b == null) return a == b;
+        return PrepareSelectorUnit(a) == PrepareSelectorUnit(b);
+    }
+
+    public string PrepareSelectorUnit(string s)
     {
         StringBuilder output = new StringBuilder();
         char[] chars;
@@ -128,7 +140,8 @@ public sealed partial class SimpleCSSCompiler
         if (ignoreTrailingSpace)
         {
             chars = s.Trim().ToCharArray();
-        } else
+        }
+        else
         {
             chars = s.TrimEnd().ToCharArray();
         }
@@ -157,12 +170,12 @@ public sealed partial class SimpleCSSCompiler
                 continue;
             }
 
-            if(i == 0 && ignoreTrailingSpace && char.IsWhiteSpace(c))
+            if (i == 0 && ignoreTrailingSpace && char.IsWhiteSpace(c))
             {
                 output.Append(c);
             }
 
-            if (combinators.Contains(c) || char.IsWhiteSpace(c))
+            if (CascadiumCompiler.combinators.Contains(c) || char.IsWhiteSpace(c))
             {
                 if (char.IsWhiteSpace(lastCombinator) || lastCombinator == '\0')
                     lastCombinator = c;

@@ -1,4 +1,4 @@
-﻿using SimpleCSS;
+﻿using Cascadium;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +9,7 @@ using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace xcss;
+namespace cssimple;
 
 internal class Compiler
 {
@@ -26,7 +26,7 @@ internal class Compiler
             }
         }
 
-        CSSCompilerOptions options = new SimpleCSS.CSSCompilerOptions()
+        CascadiumOptions options = new Cascadium.CascadiumOptions()
         {
             Pretty = args.Pretty == BoolType.True,
             UseVarShortcut = args.UseVarShortcuts == BoolType.True,
@@ -38,7 +38,7 @@ internal class Compiler
         if (!string.IsNullOrEmpty(stdin))
         {
             anyCompiled = true;
-            string result = SimpleCSSCompiler.Compile(stdin, options);
+            string result = Cascadium.CascadiumCompiler.Compile(stdin, options);
             Console.Out.Write(result);
         }
 
@@ -100,7 +100,7 @@ internal class Compiler
                 foreach (string f in inputFiles)
                 {
                     string contents = File.ReadAllText(f);
-                    string result = SimpleCSSCompiler.Compile(contents, options);
+                    string result = Cascadium.CascadiumCompiler.Compile(contents, options);
                     compiled.Append(result);
                 }
 

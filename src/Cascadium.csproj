@@ -2,27 +2,27 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
-		<RootNamespace>SimpleCSS</RootNamespace>
+		<RootNamespace>Cascadium</RootNamespace>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 
-		<Title>SimpleCSSCompiler</Title>
-		<PackageId>SimpleCSSCompiler</PackageId>
+		<Title>Cascadium</Title>
+		<PackageId>Cascadium</PackageId>
 
 		<Authors>CypherPotato</Authors>
 		<Company>Project Principium</Company>
-		<Product>SimpleCSSCompiler</Product>
+		<Product>Cascadium</Product>
 		<Description>Provides a CSS compiler that compiles higher-level code with single-line comments, nesting and more into a legacy CSS file.</Description>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<RepositoryUrl>https://github.com/CypherPotato/simple-css-compiler</RepositoryUrl>
+		<RepositoryUrl>https://github.com/CypherPotato/cascadium</RepositoryUrl>
 		<PackageTags>css,scss,sass,less</PackageTags>
 		<RepositoryType>git</RepositoryType>
 
-		<Version>1.0.9</Version>
-		<AssemblyVersion>1.0.9</AssemblyVersion>
-		<FileVersion>1.0.9</FileVersion>
+		<Version>0.1.0</Version>
+		<AssemblyVersion>0.1.0</AssemblyVersion>
+		<FileVersion>0.1.0</FileVersion>
 
 		<NeutralLanguage>en</NeutralLanguage>
 		<IncludeSymbols>True</IncludeSymbols>

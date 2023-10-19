@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace xcss;
+namespace cssimple;
 internal static class PathUtils
 {
     private const int UnitKb = 1024;
