@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace cssimple;
+namespace cascadiumtool;
 
 internal static class Watcher
 {
@@ -40,6 +40,11 @@ internal static class Watcher
         watchingDirectories = paths.ToArray();
         foreach (string p in paths)
         {
+            if(!Directory.Exists(p))
+            {
+                return Log.ErrorKill("the detected directory path at " + p + " does not exists.");
+            }
+
             if (smallestPath == null || p.Length < smallestPath.Length)
             {
                 smallestPath = p;
@@ -53,7 +58,7 @@ internal static class Watcher
         fsWatcher.IncludeSubdirectories = true;
         fsWatcher.EnableRaisingEvents = true;
 
-        Log.Info("xcss is watching for file changes");
+        Log.Info("cascadium is watching for file changes");
         Log.LoggingEnabled = false;
 
         Compiler.RunCompiler(args);

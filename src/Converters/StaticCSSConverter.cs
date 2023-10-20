@@ -57,17 +57,28 @@ public class StaticCSSConverter : CSSConverter
     /// <inheritdoc/>
     public override void Convert(String? value, NameValueCollection outputDeclarations)
     {
-        string[] arguments = SafeSplit(value);
-        foreach (KeyValuePair<string, string> pair in Output)
+        if (ArgumentCount != null)
         {
-            string newValue = pair.Value;
-
-            for (int i = 0; i < arguments.Length; i++)
+            string[] arguments = SafeSplit(value);
+            foreach (KeyValuePair<string, string> pair in Output)
             {
-                newValue = newValue.Replace("$" + (i + 1), arguments[i]);
-            }
+                string newValue = pair.Value;
 
-            outputDeclarations.Add(pair.Key, newValue);
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    newValue = newValue.Replace("$" + (i + 1), arguments[i]);
+                }
+
+                outputDeclarations.Add(pair.Key, newValue);
+            }
+        }
+        else
+        {
+            foreach (KeyValuePair<string, string> pair in Output)
+            {
+                string newValue = pair.Value.Replace("$*", value);
+                outputDeclarations.Add(pair.Key, newValue);
+            }
         }
     }
 }

@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\SimpleCSSCompiler.csproj" />
+    <ProjectReference Include="..\..\..\src\Cascadium.csproj" />
   </ItemGroup>
 
 </Project>

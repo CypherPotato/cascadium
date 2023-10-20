@@ -11,7 +11,7 @@ using Cascadium;
 using System.Text.Json;
 using System.IO;
 
-namespace cssimple;
+namespace cascadiumtool;
 
 [JsonSerializable(typeof(ICollection<string>))]
 [JsonSerializable(typeof(string))]

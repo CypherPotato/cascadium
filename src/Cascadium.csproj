@@ -3,13 +3,14 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<RootNamespace>Cascadium</RootNamespace>
+		<AssemblyName>Cascadium.Core</AssemblyName>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 
-		<Title>Cascadium</Title>
-		<PackageId>Cascadium</PackageId>
+		<Title>Cascadium Compiler</Title>
+		<PackageId>Cascadium.Compiler</PackageId>
 
 		<Authors>CypherPotato</Authors>
 		<Company>Project Principium</Company>

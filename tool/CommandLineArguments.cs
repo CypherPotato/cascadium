@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace cssimple;
+namespace cascadiumtool;
 
 internal class CommandLineArguments
 {

@@ -4,7 +4,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
-namespace cssimple;
+namespace cascadiumtool;
 
 internal class Program
 {

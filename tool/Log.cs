@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace cssimple;
+namespace cascadiumtool;
 internal static class Log
 {
     public static bool LoggingEnabled { get; set; } = true;
@@ -23,6 +23,6 @@ internal static class Log
 
     private static void Write(string level, string message)
     {
-        Console.WriteLine("xcss {0,5}: {1}", level, message);
+        Console.WriteLine("cascadium {0,5}: {1}", level, message);
     }
 }

@@ -9,7 +9,7 @@ using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace cssimple;
+namespace cascadiumtool;
 
 internal class Compiler
 {
@@ -31,6 +31,7 @@ internal class Compiler
             Pretty = args.Pretty == BoolType.True,
             UseVarShortcut = args.UseVarShortcuts == BoolType.True,
             KeepNestingSpace = args.KeepNestingSpace == BoolType.True,
+            Merge = args.Merge == BoolType.True
         };
 
         Program.CompilerOptions?.ApplyConfiguration(options);
