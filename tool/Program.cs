@@ -20,9 +20,11 @@ internal class Program
         {
             CommandLineParser.PrintHelp<CommandLineArguments>($"Cascadium [{VersionLabel}]", "Distributed under MIT License", errors);
             return 0;
+        } else
+        {
+            RunParsed(result, out int errorcode);
+            return errorcode;
         }
-
-        return 1;
     }
 
     public static void RunParsed(CommandLineArguments args, out int errorcode)

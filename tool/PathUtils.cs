@@ -8,18 +8,18 @@ using System.Threading.Tasks;
 namespace cascadiumtool;
 internal static class PathUtils
 {
-    private const int UnitKb = 1024;
-    private const int UnitMb = UnitKb * 1024;
-    private const int UnitGb = UnitMb * 1024;
+    private const double UnitKb = 1024;
+    private const double UnitMb = UnitKb * 1024;
+    private const double UnitGb = UnitMb * 1024;
 
-    public static string FileSize(int len)
+    public static string FileSize(long len)
     {
-        return len switch
+        return (double)len switch
         {
-            (> 0) and (< UnitKb) => $"{len} bytes",
-            (>= UnitKb) and (< UnitMb) => $"{len / UnitKb} kb",
-            (>= UnitMb) and (< UnitGb) => $"{len / UnitMb} mb",
-            (>= UnitGb) => $"{len / UnitGb} gb",
+            (> 0) and (< UnitKb) => $"{Math.Round((double)len, 2)} bytes",
+            (>= UnitKb) and (< UnitMb) => $"{Math.Round(len / UnitKb, 2)} kb",
+            (>= UnitMb) and (< UnitGb) => $"{Math.Round(len / UnitMb, 2)} mb",
+            (>= UnitGb) => $"{Math.Round(len / UnitGb, 2)} gb",
             _ => $"{len} bytes"
         };
     }

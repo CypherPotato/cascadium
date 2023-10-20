@@ -23,6 +23,6 @@ internal static class Log
 
     private static void Write(string level, string message)
     {
-        Console.WriteLine("cascadium {0,5}: {1}", level, message);
+        Console.WriteLine("{0,-17} {1}", "cascadium [" + level + "]", message);
     }
 }

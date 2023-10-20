@@ -97,18 +97,21 @@ internal class Compiler
             {
                 anyCompiled = true;
 
+                long compiledLength = 0, totalLength = 0;
                 StringBuilder compiled = new StringBuilder();
                 foreach (string f in inputFiles)
                 {
                     string contents = File.ReadAllText(f);
                     string result = Cascadium.CascadiumCompiler.Compile(contents, options);
                     compiled.Append(result);
+                    totalLength += new FileInfo(f).Length;
                 }
 
-                if (outputFile != null)
+                if (outputFile != null) 
                 {
                     File.WriteAllText(outputFile, compiled.ToString());
-                    Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} [{PathUtils.FileSize(compiled.Length)}]");
+                    compiledLength = new FileInfo(outputFile).Length;
+                    Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} [{PathUtils.FileSize(totalLength)} -> {PathUtils.FileSize(compiledLength)}]");
                 }
                 else
                 {
