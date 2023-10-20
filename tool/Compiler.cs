@@ -46,7 +46,7 @@ internal class Compiler
         {
             List<string> includedExtensions = new List<string>() { ".xcss" };
             List<string> inputFiles = new List<string>();
-
+            
             string? outputFile = null;
             if (!string.IsNullOrEmpty(args.OutputFile))
             {
