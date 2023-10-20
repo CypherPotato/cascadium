@@ -1,6 +1,4 @@
-﻿using CommandLine;
-using CommandLine.Text;
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -8,6 +6,7 @@ namespace cascadiumtool;
 
 internal class Program
 {
+    public const string VersionLabel = "v.0.1.1-alpha";
     public static string CurrentDirectory { get; } = Directory.GetCurrentDirectory();
     public static bool HasRootConfiguration { get; private set; }
     public static JsonCssCompilerOptions? CompilerOptions { get; set; }
@@ -15,48 +14,15 @@ internal class Program
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CommandLineArguments))]
     static int Main(string[] args)
     {
-        var parser = new Parser(with =>
-        {
-            with.AutoHelp = true;
-            with.AutoVersion = true;
-            with.AllowMultiInstance = true;
-            with.CaseInsensitiveEnumValues = true;
-            with.MaximumDisplayWidth = Console.BufferWidth;
-            with.IgnoreUnknownArguments = false;
-            with.CaseSensitive = false;
-        });
+        CommandLineParser.TryParse<CommandLineArguments>(args, out var result, out var errors);
 
-        int errorcode = 0;
-        var result = parser.ParseArguments<CommandLineArguments>(args);
-
-        if (args.Length == 0)
+        if (errors.Length > 0 || args.Length == 0)
         {
-            Console.WriteLine(HelpText.AutoBuild(result, _ => _, _ => _));
-            return -1;
+            CommandLineParser.PrintHelp<CommandLineArguments>($"Cascadium [{VersionLabel}]", "Distributed under MIT License", errors);
+            return 0;
         }
 
-        result
-            .WithParsed(args => RunParsed(args, out errorcode))
-            .WithNotParsed(err =>
-            {
-                ShowHelp(result);
-            });
-
-        return errorcode;
-    }
-
-    public static void ShowHelp(ParserResult<CommandLineArguments> pResult)
-    {
-        var helpText = HelpText.AutoBuild(pResult, h =>
-        {
-            h.AutoVersion = true;
-            h.Heading = "Simple CSS Compiler - XCSS";
-            h.Copyright = "distributed under MIT license";
-            h.AddEnumValuesToHelpText = true;
-
-            return h;
-        });
-        Console.WriteLine(helpText);
+        return 1;
     }
 
     public static void RunParsed(CommandLineArguments args, out int errorcode)

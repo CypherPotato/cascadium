@@ -1,6 +1,4 @@
-﻿using CommandLine.Text;
-using CommandLine;
-using Cascadium.Converters;
+﻿using Cascadium.Converters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
