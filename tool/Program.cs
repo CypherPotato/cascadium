@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -6,7 +7,7 @@ namespace cascadiumtool;
 
 internal class Program
 {
-    public const string VersionLabel = "v.0.1.1-alpha";
+    public const string VersionLabel = "v.0.1.1-alpha-3";
     public static string CurrentDirectory { get; } = Directory.GetCurrentDirectory();
     public static bool HasRootConfiguration { get; private set; }
     public static JsonCssCompilerOptions? CompilerOptions { get; set; }

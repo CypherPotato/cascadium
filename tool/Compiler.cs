@@ -46,7 +46,7 @@ internal class Compiler
         {
             List<string> includedExtensions = new List<string>() { ".xcss" };
             List<string> inputFiles = new List<string>();
-            
+
             string? outputFile = null;
             if (!string.IsNullOrEmpty(args.OutputFile))
             {
@@ -54,8 +54,8 @@ internal class Compiler
                 PathUtils.EnsureExistence(Path.GetDirectoryName(outputFile)!);
             }
 
-            if (args.Extensions.Any())
-                includedExtensions.AddRange(args.Extensions);
+            if (args.Extensions.Count > 0)
+                includedExtensions.AddRange(args.Extensions.Cast<string>());
 
             foreach (string f in args.InputFiles)
             {

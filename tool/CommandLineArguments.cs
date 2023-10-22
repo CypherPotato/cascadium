@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,16 +15,16 @@ internal class CommandLineArguments
     internal List<Regex> CompiledExcludes = new List<Regex>();
 
     [Option('f', "file", Group = "Input options", Order = 1, HelpText = "Specifies a relative path to an input file.")]
-    public ICollection<string> InputFiles { get; set; } = new List<string>();
+    public ArrayList InputFiles { get; set; } = new ArrayList();
 
     [Option('d', "dir", Group = "Input options", Order = 1, HelpText = "Specifies a relative path to recursively include an directory.")]
-    public ICollection<string> InputDirectories { get; set; } = new List<string>();
+    public ArrayList InputDirectories { get; set; } = new ArrayList();
 
     [Option('x', "extensions", Group = "Input options", Order = 1, HelpText = "Specify extensions (starting with dot) which the compiler will search for input directories.")]
-    public ICollection<string> Extensions { get; set; } = new List<string>();
+    public ArrayList Extensions { get; set; } = new ArrayList();
 
     [Option('e', "exclude", Group = "Input options", Order = 1, HelpText = "Exclude an file or directory that matches the specified regex.")]
-    public ICollection<string> Exclude { get; set; } = new List<string>();
+    public ArrayList Exclude { get; set; } = new ArrayList();
 
     [Option("stdin", Group = "Input options", Order = 1, HelpText = "Specifies that the stdin should be included as an input.")]
     public bool StdIn { get; set; } = false;
@@ -53,10 +54,10 @@ internal class CommandLineArguments
     {
         if (!IsCompiled)
         {
-            InputDirectories = new List<string>(InputDirectories);
-            InputFiles = new List<string>(InputFiles);
-            Extensions = new List<string>(Extensions);
-            Exclude = new List<string>(Exclude);
+            InputDirectories = new ArrayList(InputDirectories);
+            InputFiles = new ArrayList(InputFiles);
+            Extensions = new ArrayList(Extensions);
+            Exclude = new ArrayList(Exclude);
 
             if (jsonConfig != null)
             {

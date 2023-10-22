@@ -34,7 +34,7 @@ internal static class Watcher
         if (paths.Count == 0)
         {
             paths.Add(Program.CurrentDirectory);
-            args.InputDirectories = new string[1] { Program.CurrentDirectory };
+            args.InputDirectories = new() { Program.CurrentDirectory };
         }
 
         watchingDirectories = paths.ToArray();

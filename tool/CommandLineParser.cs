@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,7 +33,6 @@ internal class OptionAttribute : Attribute
 
 internal class CommandLineParser
 {
-    [DynamicDependency(DynamicallyAccessedMemberTypes.All, "System.Reflection.PropertyInfo", "mscorlib")]
     [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072",
               Justification = "The return value of method 'System.Reflection.PropertyInfo.PropertyType.get' does not have matching annotations.")]
     public static bool TryParse
@@ -108,15 +109,11 @@ internal class CommandLineParser
         {
             castedValue = Enum.Parse(propType, value, true);
         }
-        else if (propType.FullName!.StartsWith(typeof(ICollection<>).FullName!))
+        else if (propType == typeof(ArrayList))
         {
-            Type subType = propType.GenericTypeArguments[0];
-            castedValue = Convert.ChangeType(value, subType);
-            object collection = prop.GetValue(obj)!;
+            ArrayList collection = (ArrayList)prop.GetValue(obj)!;
 
-            var addMethod = propType.GetMethod("Add", BindingFlags.Public | BindingFlags.Instance);
-            addMethod?.Invoke(collection, new object[] { castedValue });
-
+            collection.Add(value);
             prop.SetValue(obj, collection);
 
             return;
