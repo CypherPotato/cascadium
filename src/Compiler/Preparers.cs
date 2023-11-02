@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -67,6 +68,33 @@ internal class Preparers : CompilerModule
         }
 
         return output.ToString().Trim();
+    }
+
+    public string? CombineSelectors(string? a, string? b)
+    {
+        if (a == null) return b;
+        if (b == null) return a;
+        if (a == null && b == null) return null;
+
+        string[] A = Context.Split.SafeSplit(a, ',').Select(a => a.Trim()).ToArray();
+        string[] B = Context.Split.SafeSplit(b, ',').Select(b => b.Trim()).ToArray();
+
+        List<string> output = new List<string>();
+
+        foreach (string n in A.Concat(B))
+        {
+            if (!output.Contains(n))
+                output.Add(n);
+        }
+
+        if (Context.Options?.Pretty == true)
+        {
+            return String.Join(", ", output.OrderByDescending(o => o.Length));
+        }
+        else
+        {
+            return String.Join(',', output);
+        }
     }
 
     public string PrepareValue(string value)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cascadium;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +46,10 @@ internal class CommandLineArguments
     public BoolType KeepNestingSpace { get; set; } = BoolType.False;
 
     [Option("p:Merge", Group = "Compiler settings", Order = 3, HelpText = "Specifies whether the compiler should merge rules and at-rules.")]
-    public BoolType Merge { get; set; } = BoolType.False;
+    public MergeOption Merge { get; set; } = MergeOption.None;
+
+    [Option("p:MergeOrderPriority", Group = "Compiler settings", Order = 3, HelpText = "Specifies how the merge will prioritize the order of the rules as it finds them.")]
+    public MergeOrderPriority MergeOrderPriority { get; set; } = MergeOrderPriority.PreserveFirst;
 
     [Option("watch", Group = "Other", Order = 4, HelpText = "Specifies if the compiler should watch for file changes and rebuild on each save.")]
     public bool Watch { get; set; } = false;

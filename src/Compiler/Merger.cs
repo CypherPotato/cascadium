@@ -12,15 +12,15 @@ internal class Merger : CompilerModule
     {
     }
 
-    public void Merge(bool mergeRules, bool mergeAtRules)
+    public void Merge(bool mergeSelectors, bool mergeAtRules, bool mergeDeclarations)
     {
-        if (mergeRules)
+        if (mergeSelectors)
         {
-            List<CssRule> newRules = new List<CssRule>();
+            List<Rule> newRules = new List<Rule>();
 
-            foreach (CssRule rule in this.Context.Rules)
+            foreach (Rule rule in this.Context.Rules)
             {
-                CssRule? existingRule = newRules
+                Rule? existingRule = newRules
                     .FirstOrDefault(r => Context.Preparers.IsSelectorsEqual(r.Selector, rule.Selector));
 
                 if (existingRule == null)
@@ -32,6 +32,12 @@ internal class Merger : CompilerModule
                     foreach (var prop in rule.Properties)
                     {
                         existingRule.Properties[prop.Key] = prop.Value;
+
+                        if (this.Context.Options?.MergeOrderPriority == MergeOrderPriority.PreserveLast)
+                        {
+                            if (rule.Order > existingRule.Order)
+                                existingRule.Order = rule.Order;
+                        }
                     }
                 }
             }
@@ -43,7 +49,7 @@ internal class Merger : CompilerModule
         {
             List<CompilerContext> stylesheets = new List<CompilerContext>();
 
-            foreach (CompilerContext css in this.Context.Stylesheets)
+            foreach (CompilerContext css in this.Context.Childrens)
             {
                 if (css.AtRule == null) continue;
 
@@ -62,10 +68,33 @@ internal class Merger : CompilerModule
 
             foreach (CompilerContext css in stylesheets)
             {
-                css.Merger.Merge(mergeRules, mergeAtRules);
+                css.Merger.Merge(mergeSelectors, mergeAtRules, mergeDeclarations);
             }
 
-            this.Context.Stylesheets = stylesheets;
+            this.Context.Childrens = stylesheets;
+        }
+
+        if (mergeDeclarations)
+        {
+            // merge top-level only
+            List<Rule> newRules = new List<Rule>();
+
+            foreach (Rule rule in this.Context.Rules)
+            {
+                Rule? existingRule = newRules
+                    .FirstOrDefault(r => r.GetPropertiesHashCode() == rule.GetPropertiesHashCode());
+
+                if (existingRule == null)
+                {
+                    newRules.Add(rule);
+                }
+                else
+                {
+                    existingRule.Selector = Context.Preparers.CombineSelectors(existingRule.Selector, rule.Selector);
+                }
+            }
+
+            this.Context.Rules = newRules;
         }
     }
 }

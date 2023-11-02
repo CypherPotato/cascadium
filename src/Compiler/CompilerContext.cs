@@ -9,8 +9,8 @@ namespace Cascadium.Compiler;
 internal class CompilerContext
 {
     public string? AtRule { get; set; }
-    public List<CssRule> Rules { get; set; } = new List<CssRule>();
-    public List<CompilerContext> Stylesheets { get; set; } = new List<CompilerContext>();
+    public List<Rule> Rules { get; set; } = new List<Rule>();
+    public List<CompilerContext> Childrens { get; set; } = new List<CompilerContext>();
     public List<string> Declarations { get; set; } = new List<string>();
     public int StackOrder { get; set; } = 0;
     public CascadiumOptions? Options { get; set; }
@@ -30,5 +30,12 @@ internal class CompilerContext
         Parser = new Parser(this);
         Preparers = new Preparers(this);
         Split = new Split(this);
+    }
+
+    internal CascadiumOptions EnsureOptionsNotNull()
+    {
+        if (Options == null)
+            Options = new CascadiumOptions();
+        return Options;
     }
 }

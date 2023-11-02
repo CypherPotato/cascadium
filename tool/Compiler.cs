@@ -1,6 +1,8 @@
 ﻿using Cascadium;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -31,7 +33,8 @@ internal class Compiler
             Pretty = args.Pretty == BoolType.True,
             UseVarShortcut = args.UseVarShortcuts == BoolType.True,
             KeepNestingSpace = args.KeepNestingSpace == BoolType.True,
-            Merge = args.Merge == BoolType.True
+            Merge = args.Merge,
+            MergeOrderPriority = args.MergeOrderPriority
         };
 
         Program.CompilerOptions?.ApplyConfiguration(options);
@@ -67,7 +70,8 @@ internal class Compiler
                 if (string.Compare(fullPath, outputFile, true) == 0)
                     continue;
 
-                inputFiles.Add(fullPath);
+                if (!inputFiles.Contains(fullPath))
+                    inputFiles.Add(fullPath);
             }
 
             foreach (string d in args.InputDirectories)
@@ -79,13 +83,14 @@ internal class Compiler
 
                 string[] allFiles = Directory.GetFiles(fullPath, "*.*", SearchOption.AllDirectories)
                     .Where(df => includedExtensions.Contains(Path.GetExtension(df)))
+                    .OrderBy(d => d.Count(c => c == Path.DirectorySeparatorChar))
                     .ToArray();
 
                 inputFiles.AddRange(allFiles
-                    .Where(f => string.Compare(f, outputFile, true) != 0));
+                    .Where(f => string.Compare(f, outputFile, true) != 0 && !inputFiles.Contains(f)));
             }
 
-            // exclude patterns
+            // apply exclude patterns
             foreach (Regex exRegex in args.CompiledExcludes)
             {
                 inputFiles = inputFiles
@@ -97,25 +102,20 @@ internal class Compiler
             {
                 anyCompiled = true;
 
-                long compiledLength = 0, totalLength = 0;
-                StringBuilder compiled = new StringBuilder();
-                foreach (string f in inputFiles)
-                {
-                    string contents = File.ReadAllText(f);
-                    string result = Cascadium.CascadiumCompiler.Compile(contents, options);
-                    compiled.Append(result);
-                    totalLength += new FileInfo(f).Length;
-                }
+                string rawCss = string.Join("\n", inputFiles.Select(File.ReadAllText));
 
-                if (outputFile != null) 
+                long compiledLength = 0, totalLength = rawCss.Length;
+                string result = Cascadium.CascadiumCompiler.Compile(rawCss, options);
+
+                if (outputFile != null)
                 {
-                    File.WriteAllText(outputFile, compiled.ToString());
+                    File.WriteAllText(outputFile, result);
                     compiledLength = new FileInfo(outputFile).Length;
                     Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} [{PathUtils.FileSize(totalLength)} -> {PathUtils.FileSize(compiledLength)}]");
                 }
                 else
                 {
-                    Console.Write(compiled.ToString());
+                    Console.Write(result.ToString());
                 }
             }
         }

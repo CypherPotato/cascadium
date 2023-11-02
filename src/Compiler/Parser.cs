@@ -15,7 +15,7 @@ internal class Parser : CompilerModule
     {
     }
 
-    public bool ParseCss(string css)
+    public bool ParseXCss(string css)
     {
         bool anyParsed = false;
         bool selectorStarted = false;
@@ -128,11 +128,11 @@ internal class Parser : CompilerModule
                 .Substring(openingTagIndex + 1, ruleStr.Length - openingTagIndex - 2)
                 .Trim();
 
-            bool parseResult = css.Parser.ParseCss(body);
+            bool parseResult = css.Parser.ParseXCss(body);
             if (parseResult)
             {
                 // body was interpreted as an css stylesheet
-                this.Context.Stylesheets.Add(css);
+                this.Context.Childrens.Add(css);
             }
             else
             {
@@ -150,7 +150,7 @@ internal class Parser : CompilerModule
     private void ParseRule(string ruleStr, string baseSelector)
     {
         ruleStr = ruleStr.Trim();
-        CssRule rule = new CssRule()
+        Rule rule = new Rule()
         {
             Order = Context.StackOrder++
         };

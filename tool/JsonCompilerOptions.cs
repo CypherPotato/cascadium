@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using Cascadium;
 using System.Text.Json;
 using System.IO;
+using System.Diagnostics.CodeAnalysis;
 
 namespace cascadiumtool;
 
@@ -29,7 +30,8 @@ internal class JsonCssCompilerOptions
     public bool? KeepNestingSpace { get; set; }
     public bool? Pretty { get; set; }
     public bool? UseVarShortcut { get; set; }
-    public bool? Merge { get; set; }
+    public string? Merge { get; set; }
+    public string? MergeOrderPriority { get; set; }
 
     public IEnumerable<StaticCSSConverter> Converters { get; set; } = Array.Empty<StaticCSSConverter>();
     public Dictionary<string, string> AtRulesRewrites { get; set; } = new Dictionary<string, string>();
@@ -59,6 +61,8 @@ internal class JsonCssCompilerOptions
         return jsonConfig!;
     }
 
+    [DynamicDependency("MergeOption")]
+    [DynamicDependency("MergeOrderPriority")]
     public void ApplyConfiguration(CascadiumOptions compilerOptions)
     {
         compilerOptions.Converters.AddRange(Converters);
@@ -67,7 +71,8 @@ internal class JsonCssCompilerOptions
         if (this.UseVarShortcut != null) compilerOptions.UseVarShortcut = this.UseVarShortcut.Value;
         if (this.Pretty != null) compilerOptions.Pretty = this.Pretty.Value;
         if (this.KeepNestingSpace != null) compilerOptions.KeepNestingSpace = this.KeepNestingSpace.Value;
-        if (this.Merge != null) compilerOptions.Merge = this.Merge.Value;
+        if (this.Merge != null) compilerOptions.Merge = Enum.Parse<MergeOption>(this.Merge, true);
+        if (this.MergeOrderPriority != null) compilerOptions.MergeOrderPriority = Enum.Parse<MergeOrderPriority>(this.MergeOrderPriority, true);
 
         foreach (KeyValuePair<string, string> mediaRw in this.AtRulesRewrites)
         {

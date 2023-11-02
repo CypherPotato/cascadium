@@ -16,9 +16,13 @@ internal class Exporter : CompilerModule
     {
         StringBuilder sb = new StringBuilder();
 
-        if (this.Options?.Merge == true)
+        if (this.Options?.Merge != MergeOption.None)
         {
-            this.Context.Merger.Merge(true, true);
+            this.Context.Merger.Merge(
+                mergeSelectors: this.Options?.Merge.HasFlag(MergeOption.Selectors) == true,
+                mergeAtRules: this.Options?.Merge.HasFlag(MergeOption.AtRules) == true,
+                mergeDeclarations: this.Options?.Merge.HasFlag(MergeOption.Declarations) == true
+            );
         }
 
         foreach (string decl in Context.Declarations)
@@ -30,7 +34,7 @@ internal class Exporter : CompilerModule
 
         ExportRules(sb, this.Context, 0);
 
-        foreach (CompilerContext stylesheet in Context.Stylesheets)
+        foreach (CompilerContext stylesheet in Context.Childrens)
         {
             stylesheet.Options = this.Options;
             ExportStylesheet(sb, stylesheet, 0);
@@ -69,7 +73,7 @@ internal class Exporter : CompilerModule
 
     private void ExportRules(StringBuilder sb, CompilerContext css, int indentLevel)
     {
-        foreach (var rule in css.Rules.OrderBy(r => r.Order))
+        foreach (var rule in css.Rules.Where(r => r.Exported).OrderBy(r => r.Order))
         {
             if (css.Options?.Pretty == true) sb.Append(new string(' ', indentLevel * 4));
             sb.Append(rule.Selector);
