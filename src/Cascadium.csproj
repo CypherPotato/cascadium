@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<RootNamespace>Cascadium</RootNamespace>
 		<AssemblyName>Cascadium.Core</AssemblyName>
-		<ImplicitUsings>enable</ImplicitUsings>
+		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>

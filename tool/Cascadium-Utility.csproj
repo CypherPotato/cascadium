@@ -15,6 +15,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\..\LightJson\Sources\LightJson\LightJson.csproj" />
 	  <ProjectReference Include="..\src\Cascadium.csproj" />
 	</ItemGroup>
 

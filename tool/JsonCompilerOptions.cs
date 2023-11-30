@@ -9,18 +9,10 @@ using Cascadium;
 using System.Text.Json;
 using System.IO;
 using System.Diagnostics.CodeAnalysis;
+using LightJson;
+using System.Collections;
 
 namespace cascadiumtool;
-
-[JsonSerializable(typeof(ICollection<string>))]
-[JsonSerializable(typeof(string))]
-[JsonSerializable(typeof(bool))]
-[JsonSerializable(typeof(StaticCSSConverter))]
-[JsonSerializable(typeof(Dictionary<string, string>))]
-[JsonSerializable(typeof(JsonCssCompilerOptions))]
-internal partial class JsonCssCompilerOptionsSerializerContext : JsonSerializerContext
-{
-}
 
 internal class JsonCssCompilerOptions
 {
@@ -34,9 +26,9 @@ internal class JsonCssCompilerOptions
     public string? MergeOrderPriority { get; set; }
 
     public IEnumerable<StaticCSSConverter> Converters { get; set; } = Array.Empty<StaticCSSConverter>();
-    public Dictionary<string, string> AtRulesRewrites { get; set; } = new Dictionary<string, string>();
+    public IDictionary<string, string> AtRulesRewrites { get; set; } = new Dictionary<string, string>();
     public IEnumerable<string> Extensions { get; set; } = Array.Empty<string>();
-    public ICollection<string> ExcludePatterns { get; set; } = Array.Empty<string>();
+    public IEnumerable<string> ExcludePatterns { get; set; } = Array.Empty<string>();
 
     public static JsonCssCompilerOptions Create(string configFile)
     {
@@ -49,16 +41,28 @@ internal class JsonCssCompilerOptions
 
         string contents = File.ReadAllText(pathToConfigFile);
 
-        JsonCssCompilerOptions? jsonConfig = JsonSerializer.Deserialize(
-            contents,
-            typeof(JsonCssCompilerOptions),
-            new JsonCssCompilerOptionsSerializerContext(new JsonSerializerOptions()
-            {
-                PropertyNameCaseInsensitive = true,
-                ReadCommentHandling = JsonCommentHandling.Skip
-            })) as JsonCssCompilerOptions;
+        JsonOptions.ThrowOnInvalidCast = true;
+        JsonOptions.PropertyNameCaseInsensitive = true;
+        JsonOptions.Mappers.Add(new StaticCSSConverterMapper());
+        JsonOptions.Mappers.Add(new DictionaryMapper());
 
-        return jsonConfig!;
+        JsonObject jsonObj = JsonValue.Parse(contents).AsJsonObject!;
+        JsonCssCompilerOptions compilerConfig = new JsonCssCompilerOptions();
+
+        compilerConfig.InputFiles = new List<string>(jsonObj["InputFiles"].MaybeNull()?.AsJsonArray!.Select(i => i.AsString!) ?? Array.Empty<string>());
+        compilerConfig.InputDirectories = new List<string>(jsonObj["InputDirectories"].MaybeNull()?.AsJsonArray!.Select(i => i.AsString!) ?? Array.Empty<string>());
+        compilerConfig.OutputFile = jsonObj["OutputFile"].MaybeNull()?.AsString;
+        compilerConfig.KeepNestingSpace = jsonObj["KeepNestingSpace"].MaybeNull()?.AsBoolean;
+        compilerConfig.Pretty = jsonObj["pretty"].MaybeNull()?.AsBoolean;
+        compilerConfig.UseVarShortcut = jsonObj["useVarShortcut"].MaybeNull()?.AsBoolean;
+        compilerConfig.Merge = jsonObj["merge"].MaybeNull()?.AsString;
+        compilerConfig.MergeOrderPriority = jsonObj["MergeOrderPriority"].MaybeNull()?.AsString;
+        compilerConfig.Converters = jsonObj["Converters"].MaybeNull()?.AsJsonArray!.EveryAs<StaticCSSConverter>() ?? Array.Empty<StaticCSSConverter>();
+        compilerConfig.AtRulesRewrites = jsonObj["AtRulesRewrites"].MaybeNull()?.As<IDictionary<string, string>>() ?? new Dictionary<string, string>();
+        compilerConfig.Extensions = jsonObj["Extensions"].MaybeNull()?.AsJsonArray!.Select(s => s.AsString!) ?? Array.Empty<string>();
+        compilerConfig.ExcludePatterns = jsonObj["ExcludePatterns"].MaybeNull()?.AsJsonArray!.Select(s => s.AsString!) ?? Array.Empty<string>();
+
+        return compilerConfig;
     }
 
     [DynamicDependency("MergeOption")]
@@ -78,5 +82,56 @@ internal class JsonCssCompilerOptions
         {
             compilerOptions.AtRulesRewrites.Add(mediaRw.Key, mediaRw.Value);
         }
+    }
+}
+
+public class DictionaryMapper : JsonSerializerMapper
+{
+    public override Boolean CanSerialize(Type obj)
+    {
+        return obj == typeof(IDictionary<string, string>);
+    }
+
+    public override Object Deserialize(JsonValue value)
+    {
+        var dict = new Dictionary<string, string>();
+
+        value.EnsureType(JsonValueType.Object);
+        var obj = value.AsJsonObject!;
+
+        foreach (var kvp in obj.Properties)
+        {
+            dict.Add(kvp.Key, kvp.Value.AsString!);
+        }
+
+        return dict;
+    }
+
+    public override JsonValue Serialize(Object value)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class StaticCSSConverterMapper : JsonSerializerMapper
+{
+    public override Boolean CanSerialize(Type obj)
+    {
+        return obj == typeof(StaticCSSConverter);
+    }
+
+    public override Object Deserialize(JsonValue value)
+    {
+        return new StaticCSSConverter()
+        {
+            ArgumentCount = (int)value["ArgumentCount"].AsNumber,
+            MatchProperty = value["MatchProperty"].AsString,
+            Output = value["Output"].As<IDictionary<string, string>>()
+        };
+    }
+
+    public override JsonValue Serialize(Object value)
+    {
+        throw new NotImplementedException();
     }
 }

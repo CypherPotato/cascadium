@@ -1,4 +1,7 @@
-﻿namespace Cascadium;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Cascadium;
 
 internal class Rule
 {
