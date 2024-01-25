@@ -32,9 +32,7 @@ internal class Compiler
         {
             Pretty = args.Pretty == BoolType.True,
             UseVarShortcut = args.UseVarShortcuts == BoolType.True,
-            KeepNestingSpace = args.KeepNestingSpace == BoolType.True,
-            Merge = args.Merge,
-            MergeOrderPriority = args.MergeOrderPriority
+            KeepNestingSpace = args.KeepNestingSpace == BoolType.True
         };
 
         Program.CompilerOptions?.ApplyConfiguration(options);
@@ -101,21 +99,51 @@ internal class Compiler
             if (inputFiles.Count > 0)
             {
                 anyCompiled = true;
+                StringBuilder resultCss = new StringBuilder();
 
-                string rawCss = string.Join("\n", inputFiles.Select(File.ReadAllText));
+                long compiledLength = 0, totalLength = 0;
+                int smallInputLength = inputFiles.Select(Path.GetDirectoryName).Min(i => i?.Length ?? 0);
 
-                long compiledLength = 0, totalLength = rawCss.Length;
-                string result = Cascadium.CascadiumCompiler.Compile(rawCss, options);
+                foreach (string file in inputFiles)
+                {
+                    string contents = ReadFile(file);
+                    string result;
+                    totalLength += contents.Length;
+
+                    try
+                    {
+                        result = CascadiumCompiler.Compile(contents, options);
+                        compiledLength += result.Length;
+
+                        if (options.Pretty)
+                        {
+                            resultCss.AppendLine(result + "\n");
+                        }
+                        else
+                        {
+                            resultCss.Append(result);
+                        }
+                    }
+                    catch (CascadiumException cex)
+                    {
+                        Console.WriteLine($"error at file {file.Substring(smallInputLength + 1)}, line {cex.Line}, col. {cex.Column}:");
+                        Console.WriteLine();
+                        Console.WriteLine($"\t{cex.LineText}");
+                        Console.WriteLine($"\t{new string(' ', cex.Column - 1)}^");
+                        Console.WriteLine($"\t{cex.Message}");
+                        return 5;
+                    }
+                }
 
                 if (outputFile != null)
                 {
-                    File.WriteAllText(outputFile, result);
+                    File.WriteAllText(outputFile, resultCss.ToString());
                     compiledLength = new FileInfo(outputFile).Length;
                     Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} [{PathUtils.FileSize(totalLength)} -> {PathUtils.FileSize(compiledLength)}]");
                 }
                 else
                 {
-                    Console.Write(result.ToString());
+                    Console.Write(resultCss.ToString());
                 }
             }
         }
@@ -126,5 +154,10 @@ internal class Compiler
         }
 
         return 0;
+    }
+
+    static string ReadFile(string file)
+    {
+        return System.IO.File.ReadAllText(file);
     }
 }

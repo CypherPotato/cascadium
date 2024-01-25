@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
@@ -21,9 +21,9 @@
 		<PackageTags>css,scss,sass,less</PackageTags>
 		<RepositoryType>git</RepositoryType>
 
-		<Version>0.1.2</Version>
-		<AssemblyVersion>0.1.2</AssemblyVersion>
-		<FileVersion>0.1.2</FileVersion>
+		<Version>0.2.0</Version>
+		<AssemblyVersion>0.2.0</AssemblyVersion>
+		<FileVersion>0.2.0</FileVersion>
 
 		<NeutralLanguage>en</NeutralLanguage>
 		<IncludeSymbols>True</IncludeSymbols>

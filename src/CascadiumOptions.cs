@@ -2,6 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Cascadium;
 
@@ -46,6 +49,7 @@ public class CascadiumOptions
     /// </summary>
     public MergeOrderPriority MergeOrderPriority { get; set; } = MergeOrderPriority.PreserveLast;
 }
+
 
 /// <summary>
 /// Represents the order priority used at an <see cref="CascadiumOptions"/>, only appliable to <see cref="MergeOption.Selectors"/>.

@@ -22,8 +22,6 @@ internal class JsonCssCompilerOptions
     public bool? KeepNestingSpace { get; set; }
     public bool? Pretty { get; set; }
     public bool? UseVarShortcut { get; set; }
-    public string? Merge { get; set; }
-    public string? MergeOrderPriority { get; set; }
 
     public IEnumerable<StaticCSSConverter> Converters { get; set; } = Array.Empty<StaticCSSConverter>();
     public IDictionary<string, string> AtRulesRewrites { get; set; } = new Dictionary<string, string>();
@@ -41,32 +39,27 @@ internal class JsonCssCompilerOptions
 
         string contents = File.ReadAllText(pathToConfigFile);
 
-        JsonOptions.ThrowOnInvalidCast = true;
         JsonOptions.PropertyNameCaseInsensitive = true;
         JsonOptions.Mappers.Add(new StaticCSSConverterMapper());
         JsonOptions.Mappers.Add(new DictionaryMapper());
 
-        JsonObject jsonObj = JsonValue.Parse(contents).AsJsonObject!;
+        JsonObject jsonObj = JsonValue.Parse(contents).GetJsonObject();
         JsonCssCompilerOptions compilerConfig = new JsonCssCompilerOptions();
 
-        compilerConfig.InputFiles = new List<string>(jsonObj["InputFiles"].MaybeNull()?.AsJsonArray!.Select(i => i.AsString!) ?? Array.Empty<string>());
-        compilerConfig.InputDirectories = new List<string>(jsonObj["InputDirectories"].MaybeNull()?.AsJsonArray!.Select(i => i.AsString!) ?? Array.Empty<string>());
-        compilerConfig.OutputFile = jsonObj["OutputFile"].MaybeNull()?.AsString;
-        compilerConfig.KeepNestingSpace = jsonObj["KeepNestingSpace"].MaybeNull()?.AsBoolean;
-        compilerConfig.Pretty = jsonObj["pretty"].MaybeNull()?.AsBoolean;
-        compilerConfig.UseVarShortcut = jsonObj["useVarShortcut"].MaybeNull()?.AsBoolean;
-        compilerConfig.Merge = jsonObj["merge"].MaybeNull()?.AsString;
-        compilerConfig.MergeOrderPriority = jsonObj["MergeOrderPriority"].MaybeNull()?.AsString;
-        compilerConfig.Converters = jsonObj["Converters"].MaybeNull()?.AsJsonArray!.EveryAs<StaticCSSConverter>() ?? Array.Empty<StaticCSSConverter>();
-        compilerConfig.AtRulesRewrites = jsonObj["AtRulesRewrites"].MaybeNull()?.As<IDictionary<string, string>>() ?? new Dictionary<string, string>();
-        compilerConfig.Extensions = jsonObj["Extensions"].MaybeNull()?.AsJsonArray!.Select(s => s.AsString!) ?? Array.Empty<string>();
-        compilerConfig.ExcludePatterns = jsonObj["ExcludePatterns"].MaybeNull()?.AsJsonArray!.Select(s => s.AsString!) ?? Array.Empty<string>();
+        compilerConfig.InputFiles = new List<string>(jsonObj["InputFiles"].MaybeNull()?.GetJsonArray().Select(i => i.GetString()) ?? Array.Empty<string>());
+        compilerConfig.InputDirectories = new List<string>(jsonObj["InputDirectories"].MaybeNull()?.GetJsonArray().Select(i => i.GetString()) ?? Array.Empty<string>());
+        compilerConfig.OutputFile = jsonObj["OutputFile"].MaybeNull()?.GetString();
+        compilerConfig.KeepNestingSpace = jsonObj["KeepNestingSpace"].MaybeNull()?.GetBoolean();
+        compilerConfig.Pretty = jsonObj["pretty"].MaybeNull()?.GetBoolean();
+        compilerConfig.UseVarShortcut = jsonObj["useVarShortcut"].MaybeNull()?.GetBoolean();
+        compilerConfig.Converters = jsonObj["Converters"].MaybeNull()?.GetJsonArray().Select(s => s.Get<StaticCSSConverter>()) ?? Array.Empty<StaticCSSConverter>();
+        compilerConfig.AtRulesRewrites = jsonObj["AtRulesRewrites"].MaybeNull()?.Get<IDictionary<string, string>>() ?? new Dictionary<string, string>();
+        compilerConfig.Extensions = jsonObj["Extensions"].MaybeNull()?.GetJsonArray().Select(s => s.GetString()) ?? Array.Empty<string>();
+        compilerConfig.ExcludePatterns = jsonObj["ExcludePatterns"].MaybeNull()?.GetJsonArray().Select(s => s.GetString()) ?? Array.Empty<string>();
 
         return compilerConfig;
     }
 
-    [DynamicDependency("MergeOption")]
-    [DynamicDependency("MergeOrderPriority")]
     public void ApplyConfiguration(CascadiumOptions compilerOptions)
     {
         compilerOptions.Converters.AddRange(Converters);
@@ -75,8 +68,6 @@ internal class JsonCssCompilerOptions
         if (this.UseVarShortcut != null) compilerOptions.UseVarShortcut = this.UseVarShortcut.Value;
         if (this.Pretty != null) compilerOptions.Pretty = this.Pretty.Value;
         if (this.KeepNestingSpace != null) compilerOptions.KeepNestingSpace = this.KeepNestingSpace.Value;
-        if (this.Merge != null) compilerOptions.Merge = Enum.Parse<MergeOption>(this.Merge, true);
-        if (this.MergeOrderPriority != null) compilerOptions.MergeOrderPriority = Enum.Parse<MergeOrderPriority>(this.MergeOrderPriority, true);
 
         foreach (KeyValuePair<string, string> mediaRw in this.AtRulesRewrites)
         {
@@ -85,23 +76,22 @@ internal class JsonCssCompilerOptions
     }
 }
 
-public class DictionaryMapper : JsonSerializerMapper
+public class DictionaryMapper : LightJson.Converters.JsonConverter
 {
     public override Boolean CanSerialize(Type obj)
     {
         return obj == typeof(IDictionary<string, string>);
     }
 
-    public override Object Deserialize(JsonValue value)
+    public override Object Deserialize(JsonValue value, Type requestedType)
     {
         var dict = new Dictionary<string, string>();
 
-        value.EnsureType(JsonValueType.Object);
-        var obj = value.AsJsonObject!;
+        var obj = value.GetJsonObject();
 
         foreach (var kvp in obj.Properties)
         {
-            dict.Add(kvp.Key, kvp.Value.AsString!);
+            dict.Add(kvp.Key, kvp.Value.GetString());
         }
 
         return dict;
@@ -113,20 +103,20 @@ public class DictionaryMapper : JsonSerializerMapper
     }
 }
 
-public class StaticCSSConverterMapper : JsonSerializerMapper
+public class StaticCSSConverterMapper : LightJson.Converters.JsonConverter
 {
     public override Boolean CanSerialize(Type obj)
     {
         return obj == typeof(StaticCSSConverter);
     }
 
-    public override Object Deserialize(JsonValue value)
+    public override Object Deserialize(JsonValue value, Type requestedType)
     {
         return new StaticCSSConverter()
         {
-            ArgumentCount = (int)value["ArgumentCount"].AsNumber,
-            MatchProperty = value["MatchProperty"].AsString,
-            Output = value["Output"].As<IDictionary<string, string>>()
+            ArgumentCount = value["ArgumentCount"].MaybeNull()?.GetInteger(),
+            MatchProperty = value["MatchProperty"].GetString(),
+            Output = value["Output"].Get<IDictionary<string, string>>()
         };
     }
 
