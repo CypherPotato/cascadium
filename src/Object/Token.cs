@@ -32,6 +32,17 @@ struct Token
     public static readonly char Ch_Semicolon = ';';
     public static readonly char Ch_DoubleDots = ':';
 
+    public static bool IsPropertyValueUnescapedDoubleDots(string propertyValue)
+    {
+        return Helper.SafeCountIncidences(propertyValue, ':') > 0;
+    }
+
+    public static bool IsValidPropertyName(string propertyName)
+    {
+        if (propertyName.Length == 0) return false;
+        return propertyName.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '$' || c == '%'); // $ and % is an special token for converters
+    }
+
     public static bool IsIdentifierChr(char c)
     {
         return Char.IsLetter(c) || Char.IsDigit(c) || c == '_' || c == '-';

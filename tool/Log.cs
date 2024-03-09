@@ -14,7 +14,7 @@ internal static class Log
         Write("error", message);
         return 1;
     }
-    public static int Info(string message, bool force=false)
+    public static int Info(string message, bool force = false)
     {
         if (!force && !LoggingEnabled) return 0;
         Write("info", message);

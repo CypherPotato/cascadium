@@ -11,29 +11,17 @@ using System.Threading.Tasks;
 namespace Cascadium;
 
 /// <summary>
-/// Provides a CSS compiler that compiles higher-level code with single-line comments, nesting into a legacy CSS file.
+/// Provides a compiler that compiles Cascadium code into an legacy CSS file.
 /// </summary>
-public sealed partial class CascadiumCompiler
+public static class CascadiumCompiler
 {
     /// <summary>
-    /// Compiles a top-module CSS stylesheet to legacy CSS, with the code already minified.
+    /// Compiles an Cascadium stylesheet to legacy CSS.
     /// </summary>
-    /// <param name="xcss">The byte array including the top module CSS code.</param>
-    /// <param name="encoder">The encoder which will be used to decode the CSS output.</param>
-    /// <param name="options">Optional options and parameters to the compilation.</param>
-    /// <returns>The compiled and minified UTF-8 CSS.</returns>
-    public static string Compile(ReadOnlySpan<byte> xcss, Encoding encoder, CascadiumOptions? options = null)
-    {
-        return Compile(encoder.GetString(xcss), options);
-    }
-
-    /// <summary>
-    /// Compiles a top-module CSS stylesheet to legacy CSS, with the code already minified.
-    /// </summary>
-    /// <param name="xcss">The top module CSS code.</param>
-    /// <param name="options">Optional options and parameters to the compilation.</param>
+    /// <param name="xcss">The Cascadium source code.</param>
+    /// <param name="options">Optional. Options and parameters to the compiler.</param>
     /// <returns>The compiled and minified CSS.</returns>
-    public static string Compile(string xcss, CascadiumOptions? options = null)
+    public static CssStylesheet Parse(string xcss, CascadiumOptions? options = null)
     {
         CascadiumOptions _options = options ?? new CascadiumOptions();
 
@@ -55,13 +43,48 @@ public sealed partial class CascadiumCompiler
         //// build the css body, assembling the flat rules into an valid
         //// css string
         CssStylesheet css = new Assembler(_options).AssemblyCss(flattenStylesheet, _options);
+        css.Options = _options;
 
         //// apply cascadium extensions
         if (_options.UseVarShortcut) ValueHandler.TransformVarShortcuts(css);
         if (_options.AtRulesRewrites.Count > 0) MediaRewriter.ApplyRewrites(css, _options);
         if (_options.Converters.Count > 0) Converter.ConvertAll(css, _options);
 
-        //// export the css into an string
-        return css.Export(_options);
+        return css;
+    }
+
+    /// <summary>
+    /// Compiles an Cascadium stylesheet to legacy CSS.
+    /// </summary>
+    /// <param name="xcss">The Cascadium source code.</param>
+    /// <param name="options">Optional. Options and parameters to the compiler.</param>
+    /// <returns>The compiled and minified CSS.</returns>
+    public static string Compile(string xcss, CascadiumOptions? options = null)
+    {
+        CascadiumOptions _options = options ?? new CascadiumOptions();
+        return Parse(xcss, _options).Export();
+    }
+
+    /// <summary>
+    /// Compiles an Cascadium stylesheet to legacy CSS.
+    /// </summary>
+    /// <param name="xcss">The byte array including the Cascadium source code.</param>
+    /// <param name="options">Optional. Options and parameters to the compiler.</param>
+    /// <returns>The compiled UTF-8 CSS.</returns>
+    public static string Compile(ReadOnlySpan<byte> xcss, CascadiumOptions? options = null)
+    {
+        return Compile(xcss, Encoding.UTF8, options);
+    }
+
+    /// <summary>
+    /// Compiles an Cascadium stylesheet to legacy CSS.
+    /// </summary>
+    /// <param name="xcss">The byte array including the Cascadium source code.</param>
+    /// <param name="encoder">The encoder which will be used to decode the CSS output.</param>
+    /// <param name="options">Optional. Options and parameters to the compiler.</param>
+    /// <returns>The compiled CSS.</returns>
+    public static string Compile(ReadOnlySpan<byte> xcss, Encoding encoder, CascadiumOptions? options = null)
+    {
+        return Compile(encoder.GetString(xcss), options);
     }
 }

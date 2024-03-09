@@ -14,8 +14,9 @@ internal static class Watcher
     private static FileSystemWatcher fsWatcher = new FileSystemWatcher();
     private static CommandLineArguments watchArgs = null!;
     private static string[] watchingDirectories = Array.Empty<string>();
+    private static bool IsCompilingFile = false;
 
-    public static int Watch(CommandLineArguments args)
+    public static async Task<int> Watch(CommandLineArguments args)
     {
         watchArgs = args;
         HashSet<string> paths = new HashSet<string>();
@@ -40,7 +41,7 @@ internal static class Watcher
         watchingDirectories = paths.ToArray();
         foreach (string p in paths)
         {
-            if(!Directory.Exists(p))
+            if (!Directory.Exists(p))
             {
                 return Log.ErrorKill("the detected directory path at " + p + " does not exists.");
             }
@@ -58,20 +59,25 @@ internal static class Watcher
         fsWatcher.IncludeSubdirectories = true;
         fsWatcher.EnableRaisingEvents = true;
 
+        await Compiler.RunCompiler(args);
         Log.Info("cascadium is watching for file changes");
-        Log.LoggingEnabled = false;
-
-        Compiler.RunCompiler(args);
+        //Log.LoggingEnabled = false;
 
         Thread.Sleep(-1);
         return 0;
     }
 
-    [MethodImpl(MethodImplOptions.Synchronized)]
-    private static void FsWatcher_Changed(Object sender, FileSystemEventArgs e)
+    private static async void FsWatcher_Changed(Object sender, FileSystemEventArgs e)
     {
+        if (IsCompilingFile)
+        {
+            return;
+        }
+
+        IsCompilingFile = true;
+
         string outFile = PathUtils.ResolvePath(watchArgs.OutputFile);
-        if(outFile == e.FullPath)
+        if (outFile == e.FullPath)
         {
             // avoid compiling the out file
             return;
@@ -87,12 +93,17 @@ internal static class Watcher
 
         foreach (string includedDir in watchingDirectories)
             isDirIncluded |= file.StartsWith(includedDir);
+
         if (!isDirIncluded)
             return;
 
+        Program.CompilerCache.Remove(file);
+
         try
         {
-            Compiler.RunCompiler(watchArgs);
+            Thread.Sleep(300); // prevent the below error giving time to the time to write
+            await Compiler.RunCompiler(watchArgs);
+            ;
         }
         catch (System.IO.IOException)
         {
@@ -101,7 +112,8 @@ internal static class Watcher
         }
         finally
         {
-            Thread.Sleep(500);
+            IsCompilingFile = false;
+            Thread.Sleep(150);
         }
     }
 }

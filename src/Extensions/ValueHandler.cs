@@ -12,20 +12,20 @@ internal class ValueHandler
 {
     public static void TransformVarShortcuts(CssStylesheet css)
     {
-        foreach (var rule in css.Rules)
+        foreach (var rule in css._rules)
         {
-            foreach(string key in rule.Declarations.Keys)
+            foreach (string key in rule._declarations.Keys)
             {
-                rule.Declarations[key] = ApplyVarShortcuts(rule.Declarations[key]);
+                rule._declarations[key] = ApplyVarShortcuts(rule._declarations[key], css);
             }
         }
-        foreach (var subcss in css.Stylesheets)
+        foreach (var subcss in css._stylesheets)
         {
             TransformVarShortcuts(subcss);
         }
     }
 
-    static string ApplyVarShortcuts(string value)
+    static string ApplyVarShortcuts(string value, CssStylesheet stylesheet)
     {
         StringBuilder output = new StringBuilder();
         char[] chars = value.ToCharArray();
@@ -37,6 +37,7 @@ internal class ValueHandler
         {
             char c = chars[i];
             char b = i > 0 ? chars[i - 1] : '\0';
+            char n = i < chars.Length - 1 ? chars[i + 1] : '\0';
 
             output.Append(c);
 
@@ -51,7 +52,8 @@ internal class ValueHandler
 
             if ((inSingleString || inDoubleString) == false)
             {
-                if (c == '-' && b == '-' && output.Length >= 2 && !output.ToString().EndsWith("var(--"))
+                string tmpOut = output.ToString();
+                if (c == '-' && b == '-' && n != '-' && output.Length >= 2 && !tmpOut.EndsWith("var(--") && !tmpOut.EndsWith("---"))
                 {
                     isParsingVarname = true;
                     output.Length -= 2;

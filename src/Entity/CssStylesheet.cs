@@ -8,19 +8,57 @@ using System.Threading.Tasks;
 
 namespace Cascadium.Entity;
 
-class CssStylesheet
+/// <summary>
+/// Represents an CSS stylesheet.
+/// </summary>
+public class CssStylesheet
 {
-    public string? AtRuleDeclaration { get; set; }
-    public List<string> Statements { get; set; } = new List<string>();
-    public List<CssStylesheet> Stylesheets { get; set; } = new List<CssStylesheet>();
-    public List<CssRule> Rules { get; set; } = new List<CssRule>();
+    internal List<string> _statements { get; set; } = new List<string>();
+    internal List<CssStylesheet> _stylesheets { get; set; } = new List<CssStylesheet>();
+    internal List<CssRule> _rules { get; set; } = new List<CssRule>();
 
-    public CssStylesheet GetOrCreateStylesheet(string atRuleDeclaration, bool canMerge)
+    /// <summary>
+    /// Gets the @-rule declaration that holds this stylesheet.
+    /// </summary>
+    public string? AtRuleDeclaration { get; internal set; }
+
+    /// <summary>
+    /// Gets the individual statements of this stylesheet.
+    /// </summary>
+    public string[] Statements { get => _statements.ToArray(); }
+
+    /// <summary>
+    /// Gets the children <see cref="CssStylesheet"/> of this stylesheet.
+    /// </summary>
+    public CssStylesheet[] Stylesheets { get => _stylesheets.ToArray(); }
+
+    /// <summary>
+    /// Gets an array of <see cref="CssRule"/> of this stylesheet.
+    /// </summary>
+    public CssRule[] Rules { get => _rules.ToArray(); }
+
+    /// <summary>
+    /// Gets the used <see cref="CascadiumOptions"/> used to compile this CSS stylesheet.
+    /// </summary>
+    public CascadiumOptions Options { get; internal set; } = null!;
+
+    /// <summary>
+    /// Exports this <see cref="CssStylesheet"/> to an CSS representation string, using the
+    /// <see cref="Options"/> parameter.
+    /// </summary>
+    /// <returns>An CSS string.</returns>
+    public string Export()
+    {
+        return Export(Options);
+    }
+
+
+    internal CssStylesheet GetOrCreateStylesheet(string atRuleDeclaration, bool canMerge)
     {
         if (canMerge)
         {
             string sanitized = Helper.RemoveSpaces(atRuleDeclaration);
-            foreach (CssStylesheet subStylesheet in Stylesheets)
+            foreach (CssStylesheet subStylesheet in _stylesheets)
             {
                 if (Helper.RemoveSpaces(subStylesheet.AtRuleDeclaration ?? "") == sanitized)
                 {
@@ -32,7 +70,7 @@ class CssStylesheet
             {
                 AtRuleDeclaration = atRuleDeclaration
             };
-            Stylesheets.Add(newStylesheet);
+            _stylesheets.Add(newStylesheet);
             return newStylesheet;
         }
         else
@@ -41,12 +79,12 @@ class CssStylesheet
             {
                 AtRuleDeclaration = atRuleDeclaration
             };
-            Stylesheets.Add(newStylesheet);
+            _stylesheets.Add(newStylesheet);
             return newStylesheet;
         }
     }
 
-    public string Export(CascadiumOptions options)
+    string Export(CascadiumOptions options)
     {
         StringBuilder sb = new StringBuilder();
 
@@ -76,7 +114,7 @@ class CssStylesheet
 
         void ExportRules(CssStylesheet css, int indentLevel)
         {
-            foreach (var rule in css.Rules.OrderBy(r => r.Order))
+            foreach (var rule in css._rules.OrderBy(r => r._order))
             {
                 if (options.Pretty) sb.Append(new string(' ', indentLevel * 4));
                 sb.Append(rule.Selector);
@@ -84,7 +122,7 @@ class CssStylesheet
                 sb.Append('{');
                 if (options.Pretty) sb.Append('\n');
 
-                foreach (KeyValuePair<string, string> property in rule.Declarations)
+                foreach (KeyValuePair<string, string> property in rule._declarations)
                 {
                     if (options.Pretty) sb.Append(new string(' ', (indentLevel + 1) * 4));
                     sb.Append(property.Key);
@@ -103,17 +141,17 @@ class CssStylesheet
             }
         }
 
-        foreach (string decl in Statements)
+        foreach (string decl in _statements)
         {
             sb.Append(decl);
             sb.Append(';');
             if (options.Pretty) sb.AppendLine();
         }
-        if (options.Pretty && Statements.Count > 0) sb.AppendLine();
+        if (options.Pretty && _statements.Count > 0) sb.AppendLine();
 
         ExportRules(this, 0);
 
-        foreach (CssStylesheet stylesheet in Stylesheets)
+        foreach (CssStylesheet stylesheet in _stylesheets)
         {
             ExportStylesheet(stylesheet, 0);
         }

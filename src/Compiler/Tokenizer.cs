@@ -93,9 +93,13 @@ internal class Tokenizer
         string property = declaration.Substring(0, dotPos).Trim();
         string value = declaration.Substring(dotPos + 1).Trim();
 
-        if (property == "")
+        if (!Token.IsValidPropertyName(property))
         {
-            throw new CascadiumException(Interpreter.TakeSnapshot(declaration), "syntax error: property name cannot be empty");
+            throw new CascadiumException(Interpreter.TakeSnapshot(declaration), "syntax error: invalid property name");
+        }
+        else if (Token.IsPropertyValueUnescapedDoubleDots(value))
+        {
+            throw new CascadiumException(Interpreter.TakeSnapshot(declaration), "syntax error: unclosed declaration");
         }
         else
         {

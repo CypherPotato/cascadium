@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascadium", "src\Cascadium.csproj", "{ACD2DBA9-BF07-4F18-95ED-BC69DCC59A3C}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascadium-Utility", "tool\Cascadium-Utility.csproj", "{CB7E8644-3094-44DB-94C9-068CB12C4993}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{650184C6-E955-4D15-B478-15BB312B79AF}"
@@ -13,16 +11,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{EF0FD356
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CssTests", "tests\build\CssTests\CssTests.csproj", "{9C391FB9-77C4-420D-88DC-2863B759AA64}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CascadiumLexer", "src\CascadiumLexer.csproj", "{7043E166-FDAC-4ACB-B44E-1EE018CADAE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ACD2DBA9-BF07-4F18-95ED-BC69DCC59A3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ACD2DBA9-BF07-4F18-95ED-BC69DCC59A3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ACD2DBA9-BF07-4F18-95ED-BC69DCC59A3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ACD2DBA9-BF07-4F18-95ED-BC69DCC59A3C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CB7E8644-3094-44DB-94C9-068CB12C4993}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CB7E8644-3094-44DB-94C9-068CB12C4993}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CB7E8644-3094-44DB-94C9-068CB12C4993}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -31,6 +27,10 @@ Global
 		{9C391FB9-77C4-420D-88DC-2863B759AA64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C391FB9-77C4-420D-88DC-2863B759AA64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C391FB9-77C4-420D-88DC-2863B759AA64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7043E166-FDAC-4ACB-B44E-1EE018CADAE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7043E166-FDAC-4ACB-B44E-1EE018CADAE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7043E166-FDAC-4ACB-B44E-1EE018CADAE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7043E166-FDAC-4ACB-B44E-1EE018CADAE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

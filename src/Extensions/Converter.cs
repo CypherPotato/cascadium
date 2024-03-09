@@ -13,9 +13,9 @@ internal class Converter
 {
     public static void ConvertAll(CssStylesheet css, CascadiumOptions options)
     {
-        foreach (var rule in css.Rules)
+        foreach (var rule in css._rules)
         {
-            foreach (KeyValuePair<string, string> declaration in rule.Declarations.ToArray())
+            foreach (KeyValuePair<string, string> declaration in rule._declarations.ToArray())
             {
                 foreach (CSSConverter converter in options.Converters)
                 {
@@ -23,19 +23,19 @@ internal class Converter
                     {
                         NameValueCollection output = new NameValueCollection();
                         converter.Convert(declaration.Value, output);
-                        rule.Declarations.Remove(declaration.Key);
+                        rule._declarations.Remove(declaration.Key);
 
                         foreach (string nprop in output)
                         {
                             string? value = output[nprop];
                             if (string.IsNullOrEmpty(value)) continue;
-                            rule.Declarations[nprop] = value;
+                            rule._declarations[nprop] = value;
                         }
                     }
                 }
             }
         }
-        foreach (var subcss in css.Stylesheets)
+        foreach (var subcss in css._stylesheets)
         {
             ConvertAll(subcss, options);
         }

@@ -12,7 +12,7 @@ internal class MediaRewriter
 {
     public static void ApplyRewrites(CssStylesheet cssStylesheet, CascadiumOptions options)
     {
-        foreach (var subcss in cssStylesheet.Stylesheets)
+        foreach (var subcss in cssStylesheet._stylesheets)
         {
             if (subcss.AtRuleDeclaration == null) continue;
             foreach (string rewrite in options.AtRulesRewrites)

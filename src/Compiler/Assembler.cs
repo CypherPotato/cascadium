@@ -36,11 +36,11 @@ class Assembler
             {
                 cssRule = new CssRule()
                 {
-                    Declarations = rule.Declarations,
-                    Selector = rule.Selectors[0][0],
-                    Order = ++ruleIndex
+                    _declarations = rule.Declarations,
+                    Selector = BuildCssSelector(rule.Selectors),
+                    _order = ++ruleIndex
                 };
-                result.Rules.Add(cssRule);
+                result._rules.Add(cssRule);
             }
             else
             {
@@ -49,29 +49,29 @@ class Assembler
 
                 cssRule = new CssRule()
                 {
-                    Declarations = rule.Declarations,
+                    _declarations = rule.Declarations,
                     Selector = selector,
-                    Order = ++ruleIndex
+                    _order = ++ruleIndex
                 };
 
                 if (atRule != null)
                 {
                     CssStylesheet atRuleStylesheet = result.GetOrCreateStylesheet(atRule, options.Merge.HasFlag(MergeOption.AtRules));
-                    atRuleStylesheet.Rules.Add(cssRule);
+                    atRuleStylesheet._rules.Add(cssRule);
                 }
                 else
                 {
-                    result.Rules.Add(cssRule);
+                    result._rules.Add(cssRule);
                 }
             }
         }
 
-        result.Statements.AddRange(flatStylesheet.Statements);
+        result._statements.AddRange(flatStylesheet.Statements);
 
         if (options.Merge != MergeOption.None)
         {
             Merge(result, options);
-            foreach(CssStylesheet subCss in result.Stylesheets)
+            foreach(CssStylesheet subCss in result._stylesheets)
             {
                 Merge(subCss, options);
             }
@@ -166,7 +166,7 @@ class Assembler
         {
             List<CssRule> newRules = new List<CssRule>();
 
-            foreach (CssRule rule in stylesheet.Rules)
+            foreach (CssRule rule in stylesheet._rules)
             {
                 CssRule? existingRule = newRules
                     .FirstOrDefault(r => Helper.IsSelectorsEqual(r.Selector, rule.Selector));
@@ -177,20 +177,20 @@ class Assembler
                 }
                 else
                 {
-                    foreach (var prop in rule.Declarations)
+                    foreach (var prop in rule._declarations)
                     {
-                        existingRule.Declarations[prop.Key] = prop.Value;
+                        existingRule._declarations[prop.Key] = prop.Value;
 
                         if (options.MergeOrderPriority == MergeOrderPriority.PreserveLast)
                         {
-                            if (rule.Order > existingRule.Order)
-                                existingRule.Order = rule.Order;
+                            if (rule._order > existingRule._order)
+                                existingRule._order = rule._order;
                         }
                     }
                 }
             }
 
-            stylesheet.Rules = newRules;
+            stylesheet._rules = newRules;
         }
 
         if (options.Merge.HasFlag(MergeOption.Declarations))
@@ -198,7 +198,7 @@ class Assembler
             // merge top-level only
             List<CssRule> newRules = new List<CssRule>();
 
-            foreach (CssRule rule in stylesheet.Rules)
+            foreach (CssRule rule in stylesheet._rules)
             {
                 CssRule? existingRule = newRules
                     .FirstOrDefault(r => r.GetHashCode() == rule.GetHashCode());
@@ -213,7 +213,7 @@ class Assembler
                 }
             }
 
-            stylesheet.Rules = newRules;
+            stylesheet._rules = newRules;
         }
     }
 }

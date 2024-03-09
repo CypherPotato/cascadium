@@ -9,6 +9,55 @@ namespace Cascadium.Compiler;
 
 internal static class Helper
 {
+    public static int SafeCountIncidences(string value, char op)
+    {
+        int incidences = 0;
+        bool inSingleString = false;
+        bool inDoubleString = false;
+        int expressionIndex = 0, groupIndex = 0;
+
+        for (int i = 0; i < value.Length; i++)
+        {
+            char c = value[i];
+            char b = i > 0 ? value[i - 1] : '\0';
+
+            if (c == '\'' && b != '\\' && !inDoubleString)
+            {
+                inSingleString = !inSingleString;
+            }
+            else if (c == '"' && b != '\\' && !inSingleString)
+            {
+                inDoubleString = !inDoubleString;
+            }
+            else if (c == '(' && !(inDoubleString || inSingleString))
+            {
+                expressionIndex++;
+            }
+            else if (c == ')' && !(inDoubleString || inSingleString))
+            {
+                expressionIndex--;
+            }
+            else if (c == '[' && !(inDoubleString || inSingleString))
+            {
+                groupIndex++;
+            }
+            else if (c == ']' && !(inDoubleString || inSingleString))
+            {
+                groupIndex--;
+            }
+
+            if ((inDoubleString || inSingleString) == false && expressionIndex == 0 && groupIndex == 0)
+            {
+                if (c == op)
+                {
+                    incidences++;
+                }
+            }
+        }
+
+        return incidences;
+    }
+
     public static string[] SafeSplit(string? value, char op)
     {
         if (value == null) return Array.Empty<string>();

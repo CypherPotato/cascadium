@@ -1,6 +1,7 @@
 ﻿using Cascadium;
 using Microsoft.VisualBasic;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,14 +10,17 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace cascadiumtool;
 
 internal class Compiler
 {
-    public static int RunCompiler(CommandLineArguments args)
+    public static async Task<int> RunCompiler(CommandLineArguments args)
     {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
         string? stdin = null;
         bool anyCompiled = false;
 
@@ -99,47 +103,55 @@ internal class Compiler
             if (inputFiles.Count > 0)
             {
                 anyCompiled = true;
-                StringBuilder resultCss = new StringBuilder();
-
-                long compiledLength = 0, totalLength = 0;
+                long compiledLength = 0;
                 int smallInputLength = inputFiles.Select(Path.GetDirectoryName).Min(i => i?.Length ?? 0);
+                ConcurrentBag<string> resultCss = new ConcurrentBag<string>();
 
-                foreach (string file in inputFiles)
+                CancellationTokenSource errorCanceller = new CancellationTokenSource();
+
+                try
                 {
-                    string contents = ReadFile(file);
-                    string result;
-                    totalLength += contents.Length;
-
-                    try
-                    {
-                        result = CascadiumCompiler.Compile(contents, options);
-                        compiledLength += result.Length;
-
-                        if (options.Pretty)
+                    await Parallel.ForEachAsync(inputFiles,
+                        new ParallelOptions()
                         {
-                            resultCss.AppendLine(result + "\n");
-                        }
-                        else
+                            MaxDegreeOfParallelism = 4,
+                            CancellationToken = errorCanceller.Token
+                        }, (file, ct) =>
                         {
-                            resultCss.Append(result);
-                        }
-                    }
-                    catch (CascadiumException cex)
-                    {
-                        Console.WriteLine($"error at file {file.Substring(smallInputLength + 1)}, line {cex.Line}, col. {cex.Column}:");
-                        Console.WriteLine();
-                        Console.WriteLine($"\t{cex.LineText}");
-                        Console.WriteLine($"\t{new string(' ', cex.Column - 1)}^");
-                        Console.WriteLine($"\t{cex.Message}");
-                        return 5;
-                    }
+                            if (ct.IsCancellationRequested)
+                                return ValueTask.FromCanceled(ct);
+
+                            try
+                            {
+                                string result = CompileFile(file, options);
+                                Interlocked.Add(ref compiledLength, result.Length);
+                                resultCss.Add(result);
+                            }
+                            catch (CascadiumException cex)
+                            {
+                                Console.WriteLine($"error at file {file.Substring(smallInputLength + 1)}, line {cex.Line}, col. {cex.Column}:");
+                                Console.WriteLine();
+                                Console.WriteLine($"\t{cex.LineText}");
+                                Console.WriteLine($"\t{new string(' ', cex.Column - 1)}^");
+                                Console.WriteLine($"\t{cex.Message}");
+                                errorCanceller.Cancel();
+                            }
+
+                            return ValueTask.CompletedTask;
+                        });
+                }
+                catch (TaskCanceledException)
+                {
+                    ;
                 }
 
                 if (outputFile != null)
                 {
-                    File.WriteAllText(outputFile, resultCss.ToString());
+                    string css = string.Join(options.Pretty ? "\n" : "", resultCss);
+                    File.WriteAllText(outputFile, css);
+
                     compiledLength = new FileInfo(outputFile).Length;
-                    Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} [{PathUtils.FileSize(totalLength)} -> {PathUtils.FileSize(compiledLength)}]");
+                    Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} ({PathUtils.FileSize(compiledLength)}) in {sw.ElapsedMilliseconds:N0}ms");
                 }
                 else
                 {
@@ -156,8 +168,17 @@ internal class Compiler
         return 0;
     }
 
-    static string ReadFile(string file)
+    static string CompileFile(string file, CascadiumOptions options)
     {
-        return System.IO.File.ReadAllText(file);
+        string result;
+
+        lock (Program.CompilerCache)
+            if (!Program.CompilerCache.TryGetValue(file, out result!))
+            {
+                result = CascadiumCompiler.Compile(File.ReadAllText(file), options);
+                Program.CompilerCache.Add(file, result);
+            }
+
+        return result;
     }
 }
