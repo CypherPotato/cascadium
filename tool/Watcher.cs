@@ -14,7 +14,7 @@ internal static class Watcher
     private static FileSystemWatcher fsWatcher = new FileSystemWatcher();
     private static CommandLineArguments watchArgs = null!;
     private static string[] watchingDirectories = Array.Empty<string>();
-    private static bool IsCompilingFile = false;
+    private static bool IsRunningCompilation = false;
 
     public static async Task<int> Watch(CommandLineArguments args)
     {
@@ -54,7 +54,12 @@ internal static class Watcher
 
         fsWatcher.Path = smallestPath!;
         fsWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.FileName;
+
         fsWatcher.Changed += FsWatcher_Changed;
+        fsWatcher.Renamed += FsWatcher_Changed;
+        fsWatcher.Deleted += FsWatcher_Changed;
+        fsWatcher.Created += FsWatcher_Changed;
+
         fsWatcher.Filter = "*.*";
         fsWatcher.IncludeSubdirectories = true;
         fsWatcher.EnableRaisingEvents = true;
@@ -69,12 +74,12 @@ internal static class Watcher
 
     private static async void FsWatcher_Changed(Object sender, FileSystemEventArgs e)
     {
-        if (IsCompilingFile)
+        if (IsRunningCompilation)
         {
             return;
         }
 
-        IsCompilingFile = true;
+        IsRunningCompilation = true;
 
         string outFile = PathUtils.ResolvePath(watchArgs.OutputFile);
         if (outFile == e.FullPath)
@@ -99,9 +104,19 @@ internal static class Watcher
 
         Program.CompilerCache.Remove(file);
 
+        if (e.ChangeType == WatcherChangeTypes.Renamed
+         || e.ChangeType == WatcherChangeTypes.Deleted
+         || e.ChangeType == WatcherChangeTypes.Created)
+        {
+            Log.Info($"Directory structure modified. Clearing cache.");
+            Program.CompilerCache.Clear();
+        }
+
         try
         {
-            Thread.Sleep(300); // prevent the below error giving time to the time to write
+            await Task.Delay(100); // prevent the below error giving time to the time to write
+            Log.Info($"Detected {e.ChangeType} on {Path.GetFileName(file)}, building...");
+
             await Compiler.RunCompiler(watchArgs);
             ;
         }
@@ -112,8 +127,8 @@ internal static class Watcher
         }
         finally
         {
-            IsCompilingFile = false;
-            Thread.Sleep(150);
+            await Task.Delay(400);
+            IsRunningCompilation = false;
         }
     }
 }

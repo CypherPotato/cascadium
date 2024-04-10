@@ -8,11 +8,12 @@ namespace cascadiumtool;
 
 internal class Program
 {
-    public const string VersionLabel = "v.0.3";
+    public const string VersionLabel = "v.0.4";
     public static string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
     public static bool HasRootConfiguration { get; private set; }
     public static JsonCssCompilerOptions? CompilerOptions { get; set; }
     public static Dictionary<string, string> CompilerCache { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    public static bool IsWatch { get; set; } = false;
 
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CommandLineArguments))]
     static async Task<int> Main(string[] args)
@@ -43,6 +44,7 @@ internal class Program
 
         if (args.Watch)
         {
+            IsWatch = true;
             return await Watcher.Watch(args);
         }
         else

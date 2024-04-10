@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spectre.Console;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -194,11 +195,11 @@ internal class CommandLineParser
                 string part = parts[i];
                 if (i == 0)
                 {
-                    Console.WriteLine("{0," + startTrailingSpace + "}{1,-" + (biggestOptionLength + optionGutter) + "}{2}", "", opKp.opText, part);
+                    AnsiConsole.MarkupLine("{0," + startTrailingSpace + "}[grey63]{1,-" + (biggestOptionLength + optionGutter) + "}[/][silver]{2}[/]", "", opKp.opText, part);
                 }
                 else
                 {
-                    Console.WriteLine("{0}{1}", new String(' ', biggestOptionLength + optionGutter + startTrailingSpace), part);
+                    AnsiConsole.MarkupLine("{0}[silver]{1}[/]", new String(' ', biggestOptionLength + optionGutter + startTrailingSpace), part);
                 }
             }
 

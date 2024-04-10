@@ -1,5 +1,6 @@
 ﻿using Cascadium;
 using Microsoft.VisualBasic;
+using Spectre.Console;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -129,11 +130,13 @@ internal class Compiler
                             }
                             catch (CascadiumException cex)
                             {
-                                Console.WriteLine($"error at file {file.Substring(smallInputLength + 1)}, line {cex.Line}, col. {cex.Column}:");
-                                Console.WriteLine();
-                                Console.WriteLine($"\t{cex.LineText}");
-                                Console.WriteLine($"\t{new string(' ', cex.Column - 1)}^");
-                                Console.WriteLine($"\t{cex.Message}");
+                                string linePadText = cex.Line + ".";
+                                AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [indianred_1]error[/] at file [white]{file.Substring(smallInputLength + 1)}[/], line [deepskyblue3_1]{cex.Line}[/], col. [deepskyblue3_1]{cex.Column}[/]:");
+                                AnsiConsole.WriteLine();
+                                AnsiConsole.MarkupLine($"\t[deepskyblue3_1]{linePadText}[/] [silver]{cex.LineText}[/]");
+                                AnsiConsole.MarkupLine($"\t[lightpink4]{new string(' ', cex.Column + linePadText.Length)}^[/]");
+                                AnsiConsole.MarkupLine($"\t[mistyrose3]{cex.Message}[/]");
+                                AnsiConsole.WriteLine();
                                 errorCanceller.Cancel();
                             }
 
@@ -145,17 +148,18 @@ internal class Compiler
                     ;
                 }
 
+                string css = string.Join(options.Pretty ? "\n" : "", resultCss);
                 if (outputFile != null)
-                {
-                    string css = string.Join(options.Pretty ? "\n" : "", resultCss);
+                {         
                     File.WriteAllText(outputFile, css);
 
                     compiledLength = new FileInfo(outputFile).Length;
-                    Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} ({PathUtils.FileSize(compiledLength)}) in {sw.ElapsedMilliseconds:N0}ms");
+                    if (!Program.IsWatch)
+                        Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} ({PathUtils.FileSize(compiledLength)}) in {sw.ElapsedMilliseconds:N0}ms");
                 }
                 else
                 {
-                    Console.Write(resultCss.ToString());
+                    Console.Write(css);
                 }
             }
         }

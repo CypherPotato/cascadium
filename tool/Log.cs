@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spectre.Console;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,7 @@ internal static class Log
         Write("error", message);
         return 1;
     }
+
     public static int Info(string message, bool force = false)
     {
         if (!force && !LoggingEnabled) return 0;
@@ -23,6 +25,17 @@ internal static class Log
 
     private static void Write(string level, string message)
     {
-        Console.WriteLine("{0,-17} {1}", "cascadium [" + level + "]", message);
+        if (level == "error")
+        {
+            AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [indianred_1]error[/] [white]{message}[/]");
+        }
+        else if (level == "info")
+        {
+            AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [darkcyan]info[/] [white]{message}[/]");
+        }
+        else if (level == "warn")
+        {
+            AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [darkgoldenrod]info[/] [white]{message}[/]");
+        }
     }
 }
