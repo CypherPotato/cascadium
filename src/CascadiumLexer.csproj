@@ -1,10 +1,44 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>Cascadium</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<RootNamespace>Cascadium</RootNamespace>
+		<AssemblyName>Cascadium.Core</AssemblyName>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+
+		<Title>Cascadium Compiler</Title>
+		<PackageId>Cascadium.Compiler</PackageId>
+
+		<Authors>CypherPotato</Authors>
+		<Company>Project Principium</Company>
+		<Product>Cascadium</Product>
+		<Description>Provides a CSS compiler that compiles higher-level code with single-line comments, nesting and more into a legacy CSS file.</Description>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/CypherPotato/cascadium</RepositoryUrl>
+		<PackageTags>css,scss,sass,less</PackageTags>
+		<RepositoryType>git</RepositoryType>
+
+		<Version>0.4.0</Version>
+		<AssemblyVersion>0.4.0</AssemblyVersion>
+		<FileVersion>0.4.0</FileVersion>
+
+		<NeutralLanguage>en</NeutralLanguage>
+		<IncludeSymbols>True</IncludeSymbols>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\LICENSE.txt">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>

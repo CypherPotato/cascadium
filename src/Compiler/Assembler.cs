@@ -56,7 +56,9 @@ class Assembler
 
                 if (atRule != null)
                 {
-                    CssStylesheet atRuleStylesheet = result.GetOrCreateStylesheet(atRule, options.Merge.HasFlag(MergeOption.AtRules));
+                    bool canMerge = options.Merge.HasFlag(MergeOption.AtRules)
+                        || IsGroupAtRule(atRule);
+                    CssStylesheet atRuleStylesheet = result.GetOrCreateStylesheet(atRule, canMerge);
                     atRuleStylesheet._rules.Add(cssRule);
                 }
                 else
@@ -71,7 +73,7 @@ class Assembler
         if (options.Merge != MergeOption.None)
         {
             Merge(result, options);
-            foreach(CssStylesheet subCss in result._stylesheets)
+            foreach (CssStylesheet subCss in result._stylesheets)
             {
                 Merge(subCss, options);
             }
@@ -79,6 +81,20 @@ class Assembler
 
         return result;
     }
+
+    static bool IsNotEligibleToSelectorMerge(string selector)
+        => selector.StartsWith("@font-face", StringComparison.InvariantCultureIgnoreCase) ||
+           selector.StartsWith("@counter-style", StringComparison.InvariantCultureIgnoreCase) ||
+           selector.StartsWith("@color-profile", StringComparison.InvariantCultureIgnoreCase);
+
+    static bool IsGroupAtRule(string atRule)
+        => atRule.StartsWith("@media", StringComparison.InvariantCultureIgnoreCase) ||
+           atRule.StartsWith("@scope", StringComparison.InvariantCultureIgnoreCase) ||
+           atRule.StartsWith("@supports", StringComparison.InvariantCultureIgnoreCase) ||
+           atRule.StartsWith("@page", StringComparison.InvariantCultureIgnoreCase) ||
+           atRule.StartsWith("@keyframes", StringComparison.InvariantCultureIgnoreCase) ||
+           atRule.StartsWith("@counter-style", StringComparison.InvariantCultureIgnoreCase) ||
+           atRule.StartsWith("@layer", StringComparison.InvariantCultureIgnoreCase);
 
     string BuildCssSelector(IList<string[]> selectors)
     {
@@ -168,6 +184,12 @@ class Assembler
 
             foreach (CssRule rule in stylesheet._rules)
             {
+                if (IsNotEligibleToSelectorMerge(rule.Selector))
+                {
+                    newRules.Add(rule);
+                    continue;
+                }
+
                 CssRule? existingRule = newRules
                     .FirstOrDefault(r => Helper.IsSelectorsEqual(r.Selector, rule.Selector));
 

@@ -8,7 +8,7 @@ namespace cascadiumtool;
 
 internal class Program
 {
-    public const string VersionLabel = "v.0.4";
+    public const string VersionLabel = "v.0.5";
     public static string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
     public static bool HasRootConfiguration { get; private set; }
     public static JsonCssCompilerOptions? CompilerOptions { get; set; }
