@@ -1,12 +1,5 @@
-﻿using System;
+﻿using Cascadium.Object;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using Cascadium.Entity;
-using Cascadium.Object;
 
 namespace Cascadium.Compiler;
 
@@ -121,6 +114,6 @@ internal class Tokenizer
             {
                 yield return new Token(TokenType.Em_Selector, s.Trim(), Interpreter);
             }
-        }       
+        }
     }
 }

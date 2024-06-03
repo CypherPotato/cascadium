@@ -3,12 +3,44 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Cascadium.Compiler;
 
 internal static class Helper
 {
+    public static string SafeStrReplace(string input, char search, string replacement)
+    {
+        StringBuilder sb = new StringBuilder();
+        bool inSingleString = false;
+        bool inDoubleString = false;
+
+        for (int i = 0; i < input.Length; i++)
+        {
+            char c = input[i];
+            char b = i > 0 ? input[i - 1] : '\0';
+
+            if (c == '\'' && b != '\\' && !inDoubleString)
+            {
+                inSingleString = !inSingleString;
+            }
+            else if (c == '"' && b != '\\' && !inSingleString)
+            {
+                inDoubleString = !inDoubleString;
+            }
+
+            if ((inDoubleString || inSingleString) == false && c == search)
+            {
+                sb.Append(replacement);
+            }
+            else
+            {
+                sb.Append(c);
+            }
+        }
+
+        return sb.ToString();
+    }
+
     public static int SafeCountIncidences(string value, char op)
     {
         int incidences = 0;

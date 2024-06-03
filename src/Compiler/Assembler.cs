@@ -2,10 +2,8 @@
 using Cascadium.Object;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Cascadium.Compiler;
 
@@ -121,12 +119,12 @@ class Assembler
         }
     }
 
-    string BuildCssSelector(string[] cSelectors, string[] bSelectors)
+    string BuildCssSelector(string[] currentSelectors, string[] parentSelectors)
     {
         StringBuilder sb = new StringBuilder();
-        if (bSelectors.Length == 0)
+        if (parentSelectors.Length == 0)
         {
-            foreach (string cSelector in cSelectors)
+            foreach (string cSelector in currentSelectors)
             {
                 string prepared = Helper.PrepareSelectorUnit(cSelector, Options.KeepNestingSpace, Options.Pretty);
                 sb.Append(prepared);
@@ -136,13 +134,15 @@ class Assembler
             }
             goto finish;
         }
-        foreach (string C in cSelectors)
+
+        foreach (string C in currentSelectors)
         {
             string c = C.Trim();
-            foreach (string B in bSelectors)
+            foreach (string B in parentSelectors)
             {
                 string b = B.Trim();
                 string s;
+
                 if (c.StartsWith('&'))
                 {
                     sb.Append(b);
@@ -151,6 +151,12 @@ class Assembler
                     {
                         s = s.TrimStart();
                     }
+                }
+                else if (c.Contains('&'))
+                {
+                    string repl = Helper.SafeStrReplace(c, '&', b);
+                    s = repl;
+                    ;
                 }
                 else
                 {

@@ -74,46 +74,46 @@ internal static class Watcher
 
     private static async void FsWatcher_Changed(Object sender, FileSystemEventArgs e)
     {
-        if (IsRunningCompilation)
-        {
-            return;
-        }
-
-        IsRunningCompilation = true;
-
-        string outFile = PathUtils.ResolvePath(watchArgs.OutputFile);
-        if (outFile == e.FullPath)
-        {
-            // avoid compiling the out file
-            return;
-        }
-
-        string file = e.FullPath;
-        string ext = Path.GetExtension(file);
-        if (ext != ".xcss" && !watchArgs.Extensions.Contains(ext))
-        {
-            return;
-        }
-        bool isDirIncluded = false;
-
-        foreach (string includedDir in watchingDirectories)
-            isDirIncluded |= file.StartsWith(includedDir);
-
-        if (!isDirIncluded)
-            return;
-
-        Program.CompilerCache.Remove(file);
-
-        if (e.ChangeType == WatcherChangeTypes.Renamed
-         || e.ChangeType == WatcherChangeTypes.Deleted
-         || e.ChangeType == WatcherChangeTypes.Created)
-        {
-            Log.Info($"Directory structure modified. Clearing cache.");
-            Program.CompilerCache.Clear();
-        }
-
         try
         {
+            if (IsRunningCompilation)
+            {
+                return;
+            }
+
+            IsRunningCompilation = true;
+
+            string outFile = PathUtils.ResolvePath(watchArgs.OutputFile);
+            if (outFile == e.FullPath)
+            {
+                // avoid compiling the out file
+                return;
+            }
+
+            string file = e.FullPath;
+            string ext = Path.GetExtension(file);
+            if (ext != ".xcss" && !watchArgs.Extensions.Contains(ext))
+            {
+                return;
+            }
+            bool isDirIncluded = false;
+
+            foreach (string includedDir in watchingDirectories)
+                isDirIncluded |= file.StartsWith(includedDir);
+
+            if (!isDirIncluded)
+                return;
+
+            Program.CompilerCache.Remove(file);
+
+            if (e.ChangeType == WatcherChangeTypes.Renamed
+             || e.ChangeType == WatcherChangeTypes.Deleted
+             || e.ChangeType == WatcherChangeTypes.Created)
+            {
+                Log.Info($"Directory structure modified. Clearing cache.");
+                Program.CompilerCache.Clear();
+            }
+
             await Task.Delay(100); // prevent the below error giving time to the time to write
             Log.Info($"Detected {e.ChangeType} on {Path.GetFileName(file)}, building...");
 

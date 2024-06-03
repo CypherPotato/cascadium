@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Cascadium.Object;
+using System;
 using System.Text;
-using Cascadium.Object;
 
 namespace Cascadium.Compiler;
 

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Cascadium.Compiler;
+using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Cascadium.Compiler;
 
 namespace Cascadium.Object;
 

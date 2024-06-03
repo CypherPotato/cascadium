@@ -1,10 +1,6 @@
 ﻿using Cascadium.Entity;
 using Cascadium.Object;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Cascadium.Compiler;
 
@@ -130,5 +126,5 @@ class Parser
         }
 
         return false;
-    }   
+    }
 }

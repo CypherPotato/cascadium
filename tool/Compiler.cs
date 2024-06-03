@@ -131,9 +131,8 @@ internal class Compiler
                             catch (CascadiumException cex)
                             {
                                 string linePadText = cex.Line + ".";
-                                AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [indianred_1]error[/] at file [white]{file.Substring(smallInputLength + 1)}[/], line [deepskyblue3_1]{cex.Line}[/], col. [deepskyblue3_1]{cex.Column}[/]:");
-                                AnsiConsole.WriteLine();
-                                AnsiConsole.MarkupInterpolated($"\t[deepskyblue3_1]{linePadText}[/] [silver]{cex.LineText}[/]");
+                                AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [indianred_1]error[/] at file [white]{file.Substring(smallInputLength + 1)}[/], line [deepskyblue3_1]{cex.Line}[/], col. [deepskyblue3_1]{cex.Column}[/]:\n");
+                                AnsiConsole.MarkupInterpolated($"\t[deepskyblue3_1]{linePadText}[/] [silver]{cex.LineText.TrimEnd()}[/]\n");
                                 AnsiConsole.MarkupLine($"\t[lightpink4]{new string(' ', cex.Column + linePadText.Length)}^[/]");
                                 AnsiConsole.MarkupInterpolated($"\t[mistyrose3]{cex.Message}[/]");
                                 AnsiConsole.WriteLine();
