@@ -35,10 +35,16 @@ internal class Compiler
 
         CascadiumOptions options = new Cascadium.CascadiumOptions()
         {
-            Pretty = args.Pretty == BoolType.True,
-            UseVarShortcut = args.UseVarShortcuts == BoolType.True,
-            KeepNestingSpace = args.KeepNestingSpace == BoolType.True
+            Pretty = args.Pretty,
+            UseVarShortcut = args.UseVarShortcuts,
+            KeepNestingSpace = args.KeepNestingSpace
         };
+
+        if (args.MergeOption is not null)
+            options.Merge = Enum.Parse<MergeOption>(args.MergeOption, true);
+
+        if (args.MergeOrder is not null)
+            options.MergeOrderPriority = Enum.Parse<MergeOrderPriority>(args.MergeOrder, true);
 
         Program.CompilerOptions?.ApplyConfiguration(options);
 
@@ -115,7 +121,7 @@ internal class Compiler
                     await Parallel.ForEachAsync(inputFiles,
                         new ParallelOptions()
                         {
-                            MaxDegreeOfParallelism = 4,
+                            MaxDegreeOfParallelism = 3,
                             CancellationToken = errorCanceller.Token
                         }, (file, ct) =>
                         {
@@ -149,7 +155,7 @@ internal class Compiler
 
                 string css = string.Join(options.Pretty ? "\n" : "", resultCss);
                 if (outputFile != null)
-                {         
+                {
                     File.WriteAllText(outputFile, css);
 
                     compiledLength = new FileInfo(outputFile).Length;

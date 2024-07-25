@@ -15,47 +15,28 @@ internal class CommandLineArguments
     internal bool IsCompiled = false;
     internal List<Regex> CompiledExcludes = new List<Regex>();
 
-    [Option('f', "file", Group = "Input options", Order = 1, HelpText = "Specifies a relative path to an input file.")]
-    public ArrayList InputFiles { get; set; } = new ArrayList();
-
-    [Option('d', "dir", Group = "Input options", Order = 1, HelpText = "Specifies a relative path to recursively include an directory.")]
-    public ArrayList InputDirectories { get; set; } = new ArrayList();
-
-    [Option('x', "extensions", Group = "Input options", Order = 1, HelpText = "Specify extensions (starting with dot) which the compiler will search for input directories.")]
-    public ArrayList Extensions { get; set; } = new ArrayList();
-
-    [Option('e', "exclude", Group = "Input options", Order = 1, HelpText = "Exclude an file or directory that matches the specified regex.")]
-    public ArrayList Exclude { get; set; } = new ArrayList();
-
-    [Option("stdin", Group = "Input options", Order = 1, HelpText = "Specifies that the stdin should be included as an input.")]
+    public List<string> InputFiles { get; set; } = new();
+    public List<string> InputDirectories { get; set; } = new();
+    public List<string> Extensions { get; set; } = new List<string>();
+    public List<string> Exclude { get; set; } = new List<string>();
     public bool StdIn { get; set; } = false;
-
-    [Option('c', "config", Group = "Input options", Order = 1, HelpText = "Specifies the relative or absolute path to the configuration file.")]
     public string? ConfigFile { get; set; }
-
-    [Option('o', "outfile", Group = "Output options", Order = 2, HelpText = "Specifies the output file where the compile CSS files will be written to.")]
-    public string OutputFile { get; set; } = "";
-
-    [Option("p:Pretty", Group = "Compiler settings", Order = 3, HelpText = "Specifies whether the compiler should generate an pretty, indented and formatted code.")]
-    public BoolType Pretty { get; set; } = BoolType.True;
-
-    [Option("p:UseVarShortcut", Group = "Compiler settings", Order = 3, HelpText = "Specifies whether the compiler should rewrite variable shortcuts.")]
-    public BoolType UseVarShortcuts { get; set; } = BoolType.True;
-
-    [Option("p:KeepNestingSpace", Group = "Compiler settings", Order = 3, HelpText = "Specifies whether the compiler should keep spaces after the & operator.")]
-    public BoolType KeepNestingSpace { get; set; } = BoolType.False;
-
-    [Option("watch", Group = "Other", Order = 4, HelpText = "Specifies if the compiler should watch for file changes and rebuild on each save.")]
+    public string? OutputFile { get; set; }
+    public bool Pretty { get; set; } = true;
+    public bool UseVarShortcuts { get; set; } = true;
+    public bool KeepNestingSpace { get; set; } = false;
+    public string? MergeOption { get; set; }
+    public string? MergeOrder { get; set; }
     public bool Watch { get; set; } = false;
 
     public void Import(JsonCssCompilerOptions? jsonConfig)
     {
         if (!IsCompiled)
         {
-            InputDirectories = new ArrayList(InputDirectories);
-            InputFiles = new ArrayList(InputFiles);
-            Extensions = new ArrayList(Extensions);
-            Exclude = new ArrayList(Exclude);
+            InputDirectories = new List<string>(InputDirectories);
+            InputFiles = new List<string>(InputFiles);
+            Extensions = new List<string>(Extensions);
+            Exclude = new List<string>(Exclude);
 
             if (jsonConfig != null)
             {
@@ -81,10 +62,4 @@ internal class CommandLineArguments
             IsCompiled = true;
         }
     }
-}
-
-public enum BoolType
-{
-    False,
-    True
 }
