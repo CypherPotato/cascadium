@@ -27,6 +27,7 @@ internal class CommandLineArguments
     public bool KeepNestingSpace { get; set; } = false;
     public string? MergeOption { get; set; }
     public string? MergeOrder { get; set; }
+    public FilenameTagOption? FilenameTag { get; set; }
     public bool Watch { get; set; } = false;
 
     public void Import(JsonCssCompilerOptions? jsonConfig)

@@ -22,7 +22,7 @@ internal class Program
     {
         if (args.Length == 0)
         {
-            //CommandLineParser.PrintHelp<CommandLineArguments>($"Cascadium [{VersionLabel}]", "Distributed under MIT License", errors);
+            PrintHelp();
             return 0;
         }
 
@@ -69,6 +69,9 @@ internal class Program
         if (parsed.GetValue("p:usevarshortcuts") is { } pusevarshortcuts)
             arguments.UseVarShortcuts = pusevarshortcuts == "true";
 
+        if (parsed.GetValue("p:filenametag") is { } pfilenametag)
+            arguments.FilenameTag = Enum.Parse<FilenameTagOption>(pfilenametag, true);
+
         return await RunParsed(arguments);
     }
 
@@ -85,7 +88,7 @@ internal class Program
         }
     }
 
-    void PrintHelp()
+    static void PrintHelp()
     {
         Console.WriteLine($"Cascadium Tool [{VersionLabel}]");
         Console.WriteLine($"Distributed under MIT License");
@@ -125,8 +128,7 @@ internal class Program
 
             Compiler options:
 
-                Pretty: sets whether the compiler should generate an pretty, indented and formatted
-                output.
+                Pretty: sets whether the compiler should generate an pretty, indented and formatted output.
 
                     --p:pretty <true/false>
 
@@ -145,6 +147,11 @@ internal class Program
                 MergeOrder: specify the merging order position.
             
                     --p:merge <preservefirst|preservelast>
+
+                FilenameTag: specifies whether the compiler should include a compiled file name tag in the
+                             compiler output.
+
+                    --p:filenametag <full|relative|none>
             """);
     }
 }

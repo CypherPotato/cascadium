@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -47,6 +48,7 @@ internal class Compiler
             options.MergeOrderPriority = Enum.Parse<MergeOrderPriority>(args.MergeOrder, true);
 
         Program.CompilerOptions?.ApplyConfiguration(options);
+        FilenameTagOption fileTagOption = Program.CompilerOptions?.FilenameTag ?? args.FilenameTag ?? FilenameTagOption.None;
 
         if (!string.IsNullOrEmpty(stdin))
         {
@@ -67,7 +69,7 @@ internal class Compiler
             }
 
             if (args.Extensions.Count > 0)
-                includedExtensions.AddRange(args.Extensions.Cast<string>());
+                includedExtensions.AddRange(args.Extensions);
 
             foreach (string f in args.InputFiles)
             {
@@ -128,16 +130,28 @@ internal class Compiler
                             if (ct.IsCancellationRequested)
                                 return ValueTask.FromCanceled(ct);
 
+                            string fileRelativeName = file.Substring(smallInputLength + 1);
+
                             try
                             {
                                 string result = CompileFile(file, options);
                                 Interlocked.Add(ref compiledLength, result.Length);
+
+                                if (fileTagOption is FilenameTagOption.Full)
+                                {
+                                    result = CommentString(file) + (options.Pretty ? Environment.NewLine : string.Empty) + result;
+                                }
+                                else if (fileTagOption is FilenameTagOption.Relative)
+                                {
+                                    result = CommentString(fileRelativeName) + (options.Pretty ? Environment.NewLine : string.Empty) + result;
+                                }
+
                                 resultCss.Add(result);
                             }
                             catch (CascadiumException cex)
                             {
                                 string linePadText = cex.Line + ".";
-                                AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [indianred_1]error[/] at file [white]{file.Substring(smallInputLength + 1)}[/], line [deepskyblue3_1]{cex.Line}[/], col. [deepskyblue3_1]{cex.Column}[/]:\n");
+                                AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [indianred_1]error[/] at file [white]{fileRelativeName}[/], line [deepskyblue3_1]{cex.Line}[/], col. [deepskyblue3_1]{cex.Column}[/]:\n");
                                 AnsiConsole.MarkupInterpolated($"\t[deepskyblue3_1]{linePadText}[/] [silver]{cex.LineText.TrimEnd()}[/]\n");
                                 AnsiConsole.MarkupLine($"\t[lightpink4]{new string(' ', cex.Column + linePadText.Length)}^[/]");
                                 AnsiConsole.MarkupInterpolated($"\t[mistyrose3]{cex.Message}[/]");
@@ -176,6 +190,8 @@ internal class Compiler
 
         return 0;
     }
+
+    static string CommentString(string text) => $"/* {text.Replace("*", "")} */";
 
     static string CompileFile(string file, CascadiumOptions options)
     {
