@@ -1,19 +1,23 @@
 ﻿using Spectre.Console;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace cascadiumtool;
 internal static class Log
 {
     public static bool LoggingEnabled { get; set; } = true;
+    public static bool MergeOnWatchNotify = false;
 
     public static int ErrorKill(string message)
     {
         Write("error", message);
         return 1;
+    }
+
+    public static int Warn(string message)
+    {
+        if (!LoggingEnabled) return 0;
+        Write("warn", message);
+        return 0;
     }
 
     public static int Info(string message, bool force = false)
@@ -35,7 +39,7 @@ internal static class Log
         }
         else if (level == "warn")
         {
-            AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [darkgoldenrod]info[/] [white]{message}[/]");
+            AnsiConsole.MarkupLine($"[grey]cascadium[/] [silver]{DateTime.Now:T}[/] [darkgoldenrod]warn[/] [white]{message}[/]");
         }
     }
 }

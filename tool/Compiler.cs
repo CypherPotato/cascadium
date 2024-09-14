@@ -1,16 +1,13 @@
 ﻿using Cascadium;
-using Microsoft.VisualBasic;
 using Spectre.Console;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,8 +16,13 @@ namespace cascadiumtool;
 
 internal class Compiler
 {
+    static readonly Regex VendorRegex = new Regex(@"[\\/]vendor[\\/]?", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     public static async Task<int> RunCompiler(CommandLineArguments args)
     {
+        if (args.OutputFile == null)
+            Log.LoggingEnabled = false;
+
         Stopwatch sw = new Stopwatch();
         sw.Start();
         string? stdin = null;
@@ -38,17 +40,16 @@ internal class Compiler
         {
             Pretty = args.Pretty,
             UseVarShortcut = args.UseVarShortcuts,
-            KeepNestingSpace = args.KeepNestingSpace
+            KeepNestingSpace = args.KeepNestingSpace,
+            AtRulesRewrites = args.AtRuleRewriters.Aggregate(new NameValueCollection(),
+                (seed, current) =>
+                {
+                    seed.Add(current.Key, current.Value);
+                    return seed;
+                })
         };
 
-        if (args.MergeOption is not null)
-            options.Merge = Enum.Parse<MergeOption>(args.MergeOption, true);
-
-        if (args.MergeOrder is not null)
-            options.MergeOrderPriority = Enum.Parse<MergeOrderPriority>(args.MergeOrder, true);
-
-        Program.CompilerOptions?.ApplyConfiguration(options);
-        FilenameTagOption fileTagOption = Program.CompilerOptions?.FilenameTag ?? args.FilenameTag ?? FilenameTagOption.None;
+        options.Converters.AddRange(args.Converters);
 
         if (!string.IsNullOrEmpty(stdin))
         {
@@ -102,7 +103,7 @@ internal class Compiler
             }
 
             // apply exclude patterns
-            foreach (Regex exRegex in args.CompiledExcludes)
+            foreach (Regex exRegex in args.Exclude)
             {
                 inputFiles = inputFiles
                     .Where(i => !exRegex.IsMatch(i))
@@ -114,7 +115,7 @@ internal class Compiler
                 anyCompiled = true;
                 long compiledLength = 0;
                 int smallInputLength = inputFiles.Select(Path.GetDirectoryName).Min(i => i?.Length ?? 0);
-                ConcurrentBag<string> resultCss = new ConcurrentBag<string>();
+                ConcurrentDictionary<string, string> resultCss = new ConcurrentDictionary<string, string>();
 
                 CancellationTokenSource errorCanceller = new CancellationTokenSource();
 
@@ -123,7 +124,7 @@ internal class Compiler
                     await Parallel.ForEachAsync(inputFiles,
                         new ParallelOptions()
                         {
-                            MaxDegreeOfParallelism = 3,
+                            MaxDegreeOfParallelism = Environment.ProcessorCount,
                             CancellationToken = errorCanceller.Token
                         }, (file, ct) =>
                         {
@@ -137,16 +138,16 @@ internal class Compiler
                                 string result = CompileFile(file, options);
                                 Interlocked.Add(ref compiledLength, result.Length);
 
-                                if (fileTagOption is FilenameTagOption.Full)
+                                if (args.FilenameTag is FilenameTagOption.Full)
                                 {
                                     result = CommentString(file) + (options.Pretty ? Environment.NewLine : string.Empty) + result;
                                 }
-                                else if (fileTagOption is FilenameTagOption.Relative)
+                                else if (args.FilenameTag is FilenameTagOption.Relative)
                                 {
                                     result = CommentString(fileRelativeName) + (options.Pretty ? Environment.NewLine : string.Empty) + result;
                                 }
 
-                                resultCss.Add(result);
+                                resultCss.TryAdd(file, result);
                             }
                             catch (CascadiumException cex)
                             {
@@ -167,25 +168,72 @@ internal class Compiler
                     ;
                 }
 
-                string css = string.Join(options.Pretty ? "\n" : "", resultCss);
+                if (errorCanceller.IsCancellationRequested)
+                {
+                    return 2;
+                }
+
+                StringBuilder resultCssBuilder = new StringBuilder();
+
+                var resultsOrdered = resultCss
+                    .OrderBy(k => VendorRegex.IsMatch(k.Key) ? string.Empty : Path.GetDirectoryName(k.Key));
+
+                foreach (KeyValuePair<string, string> item in resultsOrdered)
+                {
+                    resultCssBuilder.Append(item.Value);
+                    if (options.Pretty)
+                        resultCssBuilder.AppendLine();
+                }
+
+                string css = resultCssBuilder.ToString();
                 if (outputFile != null)
                 {
                     File.WriteAllText(outputFile, css);
 
                     compiledLength = new FileInfo(outputFile).Length;
-                    if (!Program.IsWatch)
+                    if (!args.Watch)
                         Log.Info($"{inputFiles.Count} file(s) -> {Path.GetFileName(args.OutputFile)} ({PathUtils.FileSize(compiledLength)}) in {sw.ElapsedMilliseconds:N0}ms");
                 }
                 else
                 {
                     Console.Write(css);
                 }
+
+                if (args.MergeOption is { } m && m != MergeOption.None)
+                {
+                    if (args.Watch)
+                    {
+                        if (Log.MergeOnWatchNotify == false)
+                        {
+                            Log.Warn("Ignoring CSS merge due to watch");
+                            Log.MergeOnWatchNotify = true;
+                        }
+                    }
+                    else
+                    {
+                        Log.Info("Merging...");
+                        options.Merge = m;
+                        options.MergeOrderPriority = args.MergeOrder ?? MergeOrderPriority.PreserveLast;
+
+                        string mergedCss = CascadiumCompiler.Compile(css, options);
+                        if (outputFile != null)
+                        {
+                            File.WriteAllText(outputFile, mergedCss);
+                            compiledLength = new FileInfo(outputFile).Length;
+                            Log.Info($"Output merged. New file size: {PathUtils.FileSize(compiledLength)}");
+                        }
+                        else
+                        {
+                            Console.Write(mergedCss);
+                        }
+                    }
+                }
             }
         }
 
         if (!anyCompiled)
         {
-            return Log.ErrorKill("no file or input was compiled.");
+            return Log.Warn("no file or input was compiled.");
         }
 
         return 0;

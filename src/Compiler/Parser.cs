@@ -6,7 +6,7 @@ namespace Cascadium.Compiler;
 
 class Parser
 {
-    public static NestedStylesheet ParseSpreadsheet(TokenCollection tokens)
+    public static NestedStylesheet ParseSpreadsheet(TokenBuffer tokens, CompilationContext context)
     {
         NestedStylesheet spreadsheet = new NestedStylesheet();
 
@@ -24,7 +24,7 @@ class Parser
             else if (result.Type == TokenType.Em_Selector)
             {
                 if (result.Content == "")
-                    throw new CascadiumException(result.DebugInfo, "empty selectors are not allowed");
+                    throw new CascadiumException(result.DebugInfo, context.InputText, "empty selectors are not allowed");
 
                 selectors.Add(result.Content);
                 goto readRule__nextSelector;
@@ -32,9 +32,9 @@ class Parser
             else if (result.Type == TokenType.Em_RuleStart)
             {
                 if (selectors.Count == 0)
-                    throw new CascadiumException(result.DebugInfo, "selector expected");
+                    throw new CascadiumException(result.DebugInfo, context.InputText, "selector expected");
 
-                ReadRule(tokens, spreadsheet, selectors.ToArray());
+                ReadRule(tokens, context, spreadsheet, selectors.ToArray());
                 selectors.Clear();
 
                 goto readRule__nextSelector;
@@ -50,7 +50,7 @@ class Parser
             }
             else
             {
-                throw new CascadiumException(result.DebugInfo, "unexpected token");
+                throw new CascadiumException(result.DebugInfo, context.InputText, "unexpected token");
             }
         }
 
@@ -58,7 +58,7 @@ class Parser
         return spreadsheet;
     }
 
-    static void ReadRule(TokenCollection tokens, IRuleContainer container, string[] externSelectors)
+    static void ReadRule(TokenBuffer tokens, CompilationContext context, IRuleContainer container, string[] externSelectors)
     {
         int ruleIndex = 0;
         List<string> buildingSelectors = new List<string>();
@@ -75,10 +75,10 @@ class Parser
             else if (result.Type == TokenType.Em_RuleStart)
             {
                 if (buildingSelectors.Count == 0)
-                    throw new CascadiumException(result.DebugInfo, "selector expected");
+                    throw new CascadiumException(result.DebugInfo, context.InputText, "selector expected");
 
                 ruleIndex++;
-                ReadRule(tokens, buildingRule, buildingSelectors.ToArray());
+                ReadRule(tokens, context, buildingRule, buildingSelectors.ToArray());
 
                 buildingSelectors.Clear();
 
@@ -89,7 +89,8 @@ class Parser
                 tokens.Read(out Token valueToken);
 
                 if (valueToken.Type != TokenType.Em_PropertyValue)
-                    throw new CascadiumException(tokens.Last.DebugInfo, "property value expected");
+                    throw new CascadiumException(tokens.Last.DebugInfo, context.InputText, "property value expected");
+
                 if (string.IsNullOrWhiteSpace(valueToken.Content))
                     goto readRule__nextItem; // skip empty declarations
 
@@ -99,16 +100,16 @@ class Parser
             else if (result.Type == TokenType.Em_Selector)
             {
                 if (result.Content == "")
-                    throw new CascadiumException(result.DebugInfo, "empty selectors are not allowed");
+                    throw new CascadiumException(result.DebugInfo, context.InputText, "empty selectors are not allowed");
                 if (IsSelectorInvalidRuleset(result.Content))
-                    throw new CascadiumException(result.DebugInfo, "; expected");
+                    throw new CascadiumException(result.DebugInfo, context.InputText, "; expected");
 
                 buildingSelectors.Add(result.Content);
                 goto readRule__nextItem;
             }
             else
             {
-                throw new CascadiumException(result.DebugInfo, "unexpected token");
+                throw new CascadiumException(result.DebugInfo, context.InputText, "unexpected token");
             }
         }
 

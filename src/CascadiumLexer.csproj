@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<RootNamespace>Cascadium</RootNamespace>
 		<AssemblyName>Cascadium.Core</AssemblyName>
 		<ImplicitUsings>disable</ImplicitUsings>
@@ -21,9 +21,9 @@
 		<PackageTags>css,scss,sass,less</PackageTags>
 		<RepositoryType>git</RepositoryType>
 
-		<Version>0.6.1</Version>
-		<AssemblyVersion>0.6.1</AssemblyVersion>
-		<FileVersion>0.6.1</FileVersion>
+		<Version>0.9.0</Version>
+		<AssemblyVersion>0.9.0</AssemblyVersion>
+		<FileVersion>0.9.0</FileVersion>
 
 		<NeutralLanguage>en</NeutralLanguage>
 		<IncludeSymbols>True</IncludeSymbols>

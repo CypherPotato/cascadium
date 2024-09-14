@@ -9,16 +9,19 @@ namespace Cascadium.Compiler;
 
 class Assembler
 {
-    public CascadiumOptions Options { get; set; }
+    public CompilationContext Context { get; set; }
 
-    public Assembler(CascadiumOptions options)
+    public Assembler(CompilationContext context)
     {
-        Options = options;
+        this.Context = context;
     }
 
-    public CssStylesheet AssemblyCss(FlatStylesheet flatStylesheet, CascadiumOptions options)
+    public CssStylesheet AssemblyCss(FlatStylesheet flatStylesheet)
     {
-        CssStylesheet result = new CssStylesheet();
+        CssStylesheet result = new CssStylesheet()
+        {
+            Options = this.Context.Options
+        };
         int ruleIndex = 0;
 
         foreach (FlatRule rule in flatStylesheet.Rules)
@@ -35,7 +38,7 @@ class Assembler
                 cssRule = new CssRule()
                 {
                     _declarations = rule.Declarations,
-                    Selector = BuildCssSelector(rule.Selectors),
+                    Selector = this.BuildCssSelector(rule.Selectors),
                     _order = ++ruleIndex
                 };
                 result._rules.Add(cssRule);
@@ -43,7 +46,7 @@ class Assembler
             else
             {
                 string? atRule = rule.PopAtRule();
-                string selector = BuildCssSelector(rule.Selectors);
+                string selector = this.BuildCssSelector(rule.Selectors);
 
                 cssRule = new CssRule()
                 {
@@ -54,7 +57,7 @@ class Assembler
 
                 if (atRule != null)
                 {
-                    bool canMerge = options.Merge.HasFlag(MergeOption.AtRules)
+                    bool canMerge = this.Context.Options.Merge.HasFlag(MergeOption.AtRules)
                         || IsGroupAtRule(atRule);
                     CssStylesheet atRuleStylesheet = result.GetOrCreateStylesheet(atRule, canMerge);
                     atRuleStylesheet._rules.Add(cssRule);
@@ -68,12 +71,12 @@ class Assembler
 
         result._statements.AddRange(flatStylesheet.Statements);
 
-        if (options.Merge != MergeOption.None)
+        if (this.Context.Options.Merge != MergeOption.None)
         {
-            Merge(result, options);
+            this.Merge(result, this.Context.Options);
             foreach (CssStylesheet subCss in result._stylesheets)
             {
-                Merge(subCss, options);
+                this.Merge(subCss, this.Context.Options);
             }
         }
 
@@ -104,16 +107,16 @@ class Assembler
         }
         if (flatCount == 1)
         {
-            return BuildCssSelector(selectors[0], Array.Empty<string>());
+            return this.BuildCssSelector(selectors[0], Array.Empty<string>());
         }
         else
         {
-            string carry = BuildCssSelector(selectors[0], Array.Empty<string>());
+            string carry = this.BuildCssSelector(selectors[0], Array.Empty<string>());
             for (int i = 1; i < flatCount; i++)
             {
                 string[] current = selectors[i];
                 if (current.Length == 0) continue;
-                carry = BuildCssSelector(current, Helper.SafeSplit(carry, ','));
+                carry = this.BuildCssSelector(current, Helper.SafeSplit(carry, ','));
             }
             return carry;
         }
@@ -126,10 +129,10 @@ class Assembler
         {
             foreach (string cSelector in currentSelectors)
             {
-                string prepared = Helper.PrepareSelectorUnit(cSelector, Options.KeepNestingSpace, Options.Pretty);
+                string prepared = Helper.PrepareSelectorUnit(cSelector, this.Context.Options.KeepNestingSpace, this.Context.Options.Pretty);
                 sb.Append(prepared);
                 sb.Append(',');
-                if (Options.Pretty)
+                if (this.Context.Options.Pretty)
                     sb.Append(' ');
             }
             goto finish;
@@ -147,7 +150,7 @@ class Assembler
                 {
                     sb.Append(b);
                     s = c.Substring(1);
-                    if (!Options.KeepNestingSpace)
+                    if (!this.Context.Options.KeepNestingSpace)
                     {
                         s = s.TrimStart();
                     }
@@ -168,17 +171,17 @@ class Assembler
                     s = c;
                 }
 
-                s = Helper.PrepareSelectorUnit(s, Options.KeepNestingSpace, Options.Pretty);
+                s = Helper.PrepareSelectorUnit(s, this.Context.Options.KeepNestingSpace, this.Context.Options.Pretty);
                 sb.Append(s);
                 sb.Append(',');
-                if (Options.Pretty)
+                if (this.Context.Options.Pretty)
                     sb.Append(' ');
             }
         }
 
     finish:
         if (sb.Length > 0) sb.Length--;
-        if (sb.Length > 0 && Options.Pretty) sb.Length--;
+        if (sb.Length > 0 && this.Context.Options.Pretty) sb.Length--;
         return sb.ToString();
     }
 

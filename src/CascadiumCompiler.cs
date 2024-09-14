@@ -22,16 +22,24 @@ public static class CascadiumCompiler
     {
         CascadiumOptions _options = options ?? new CascadiumOptions();
 
+        CompilationContext context = new CompilationContext()
+        {
+            InputText = xcss,
+            Options = _options
+        };
+
         //// strip comments and trim the input
         string sanitizedInput = Sanitizer.SanitizeInput(xcss);
 
+        var buffer = new TokenBuffer();
+
         //// tokenizes the sanitized input, which is the lexical analyzer
         //// and convert the code into tokens
-        TokenCollection resultTokens = new Tokenizer(sanitizedInput).Tokenize();
+        new Tokenizer(sanitizedInput).Tokenize(buffer);
 
         //// parses the produced tokens and produce an nested stylesheet from
         //// the token. this also applies the semantic and syntax checking
-        NestedStylesheet nestedStylesheet = Parser.ParseSpreadsheet(resultTokens);
+        NestedStylesheet nestedStylesheet = Parser.ParseSpreadsheet(buffer, context);
 
         //// flatten the stylesheet, which removes the nesting and places all
         //// rules in the top level of the stylesheet.
@@ -39,8 +47,7 @@ public static class CascadiumCompiler
 
         //// build the css body, assembling the flat rules into an valid
         //// css string
-        CssStylesheet css = new Assembler(_options).AssemblyCss(flattenStylesheet, _options);
-        css.Options = _options;
+        CssStylesheet css = new Assembler(context).AssemblyCss(flattenStylesheet);
 
         //// apply cascadium extensions
         if (_options.UseVarShortcut) ValueHandler.TransformVarShortcuts(css);

@@ -1,22 +1,33 @@
-﻿using CommandLine;
+﻿using Cascadium;
+using CommandLine;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace cascadiumtool;
 
 internal class Program
 {
-    public const string VersionLabel = "v.0.7.0";
+    public const string VersionLabel = "v.0.8.0";
     public static string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
-    public static bool HasRootConfiguration { get; private set; }
-    public static JsonCssCompilerOptions? CompilerOptions { get; set; }
     public static Dictionary<string, string> CompilerCache { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    public static bool IsWatch { get; set; } = false;
+
+    public static string[] Greetings = [
+        "Good morning, sunshine Cascadium!",
+        "Cascadium is heating up. Please, wait.",
+        "Hello, Cascadium!",
+        "Starting the Cascadium engines",
+        "Is the coffee ready? Let's code!",
+        "Hey hey, Cascadium!",
+        "Cascadium is excited today! Are you?",
+        "Another day, more cascading style sheets!",
+        "Cascadium is saying hello to you. Say it back!",
+        "Looks like it's the Cascadium code-hour!",
+        "Wake up, Cascadium! The programmer wants you to do things again."
+    ];
 
     static async Task<int> Main(string[] args)
     {
@@ -27,27 +38,47 @@ internal class Program
         }
 
         CommandLineArguments arguments = new CommandLineArguments();
-        var parsed = new CommandLineParser(args);
+        var parsed = new CommandLineParser(args.Skip(1).ToArray());
 
+        string[] implicitConfigFiles = [
+            "cssconfig.json",
+            "cssconfig.json5",
+            "cascadium.json",
+            "cascadium.json5"
+        ];
+
+        string? configFile = null;
         arguments.ConfigFile = parsed.GetValue("config", 'c');
+
+        if (arguments.ConfigFile is not null)
+        {
+            configFile = PathUtils.ResolvePath(arguments.ConfigFile);
+        }
+        else foreach (string implicitFile in implicitConfigFiles)
+            {
+                string rpath = PathUtils.ResolvePath(implicitFile);
+                if (File.Exists(rpath))
+                {
+                    configFile = rpath;
+                    break;
+                }
+            }
+
+        string runVerb = args[0];
+        if (string.Compare(runVerb, "watch", true) == 0)
+        {
+            arguments.Watch = true;
+            Log.Info(Greetings[Random.Shared.Next(0, Greetings.Length - 1)]);
+            Log.Info("Caching the current XCSS repository...");
+        }
 
         // options that are lists. json should add to them
         arguments.InputFiles = parsed.GetValues("file", 'f').ToList();
         arguments.Extensions = parsed.GetValues("extension", 'x').ToList();
-        arguments.Exclude = parsed.GetValues("exclude", 'e').ToList();
+        arguments.Exclude = parsed.GetValues("exclude", 'e').Select(x => new Regex(x, RegexOptions.IgnoreCase)).ToList();
         arguments.InputDirectories = parsed.GetValues("dir", 'd').ToList();
 
-        if (arguments.ConfigFile != null)
-        {
-            string fullPath = PathUtils.ResolvePath(arguments.ConfigFile);
-            CompilerOptions = JsonCssCompilerOptions.Create(fullPath);
-            Program.CurrentDirectory = Path.GetDirectoryName(fullPath)!;
-
-            arguments.Import(CompilerOptions);
-        }
-
         // options that arent present on config json
-        arguments.Watch = parsed.IsDefined("watch");
         arguments.StdIn = parsed.IsDefined("stdin");
 
         // options that its priority is above config json
@@ -55,10 +86,10 @@ internal class Program
             arguments.OutputFile = outfile;
 
         if (parsed.GetValue("p:merge") is { } pmerge)
-            arguments.MergeOption = pmerge;
+            arguments.MergeOption = Enum.Parse<MergeOption>(pmerge, true);
 
         if (parsed.GetValue("p:mergeorder") is { } pmergeorder)
-            arguments.MergeOrder = pmergeorder;
+            arguments.MergeOrder = Enum.Parse<MergeOrderPriority>(pmergeorder, true);
 
         if (parsed.GetValue("p:pretty") is { } ppretty)
             arguments.Pretty = ppretty == "true";
@@ -72,6 +103,12 @@ internal class Program
         if (parsed.GetValue("p:filenametag") is { } pfilenametag)
             arguments.FilenameTag = Enum.Parse<FilenameTagOption>(pfilenametag, true);
 
+        if (configFile is not null)
+        {
+            JsonCssCompilerOptions.Apply(configFile, arguments);
+            CurrentDirectory = Path.GetDirectoryName(configFile)!;
+        }
+
         return await RunParsed(arguments);
     }
 
@@ -79,7 +116,6 @@ internal class Program
     {
         if (args.Watch)
         {
-            IsWatch = true;
             return await Watcher.Watch(args);
         }
         else
@@ -94,7 +130,7 @@ internal class Program
         Console.WriteLine($"Distributed under MIT License");
         Console.WriteLine($"Visit Cascadium at https://github.com/CypherPotato/cascadium");
         Console.WriteLine();
-        Console.WriteLine($"Usage: CASCADIUM [...options]");
+        Console.WriteLine($"Usage: CASCADIUM <watch|build> [...options]");
         Console.WriteLine();
         Console.WriteLine("""
 
@@ -121,11 +157,6 @@ internal class Program
                 -o, --outfile       Specifies the relative output file where the compiled CSS file should be
                                     written to.
 
-            Development options:
-
-                    --watch         Specifies that the compiler should watch for file changes and rebuild on
-                                    each change.
-
             Compiler options:
 
                 Pretty: sets whether the compiler should generate an pretty, indented and formatted output.
@@ -144,7 +175,7 @@ internal class Program
 
                     --p:merge <none|selectors|atrules|declarations|all>
 
-                MergeOrder: specify the merging order position.
+                MergeOrder: specify the merging order position. Merge is not available in the watch mode.
             
                     --p:merge <preservefirst|preservelast>
 

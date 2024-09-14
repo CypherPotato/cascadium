@@ -8,7 +8,6 @@ struct TokenDebugInfo
 {
     public int Line;
     public int Column;
-    public string LineText;
 }
 
 struct Token
@@ -56,12 +55,12 @@ struct Token
 
     public Token(TokenType type, string content, TextInterpreter raiser)
     {
-        Type = type;
-        Content = content;
-        DebugInfo = raiser.TakeSnapshot(-content.Length);
+        this.Type = type;
+        this.Content = content;
+        this.DebugInfo = raiser.TakeSnapshot(-content.Length);
     }
 
-    public override string ToString() => $"{{{Type}}} \"{Content}\"";
+    public override string ToString() => $"{{{this.Type}}} \"{this.Content}\"";
 }
 
 enum TokenType

@@ -1,16 +1,12 @@
-﻿using Cascadium.Converters;
+﻿using Cascadium;
+using Cascadium.Converters;
+using LightJson;
+using LightJson.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.Json.Serialization;
-using Cascadium;
-using System.Text.Json;
 using System.IO;
-using System.Diagnostics.CodeAnalysis;
-using LightJson;
-using System.Collections;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace cascadiumtool;
 
@@ -23,74 +19,49 @@ public enum FilenameTagOption
 
 internal class JsonCssCompilerOptions
 {
-    public ICollection<string> InputFiles { get; set; } = Array.Empty<string>();
-    public ICollection<string> InputDirectories { get; set; } = Array.Empty<string>();
-    public string? OutputFile { get; set; }
-    public bool? KeepNestingSpace { get; set; }
-    public bool? Pretty { get; set; }
-    public bool? UseVarShortcut { get; set; }
-    public MergeOption? Merge { get; set; }
-    public MergeOrderPriority? MergeOrderPriority { get; set; }
-    public FilenameTagOption? FilenameTag { get; set; }
-
-    public IEnumerable<StaticCSSConverter> Converters { get; set; } = Array.Empty<StaticCSSConverter>();
-    public IDictionary<string, string> AtRulesRewrites { get; set; } = new Dictionary<string, string>();
-    public IEnumerable<string> Extensions { get; set; } = Array.Empty<string>();
-    public IEnumerable<string> ExcludePatterns { get; set; } = Array.Empty<string>();
-
-    public static JsonCssCompilerOptions Create(string configFile)
+    public static void Apply(string configFile, CommandLineArguments args)
     {
-        string pathToConfigFile = PathUtils.ResolvePath(configFile);
-        if (!File.Exists(pathToConfigFile))
+        if (!File.Exists(configFile))
         {
             Log.ErrorKill($"the specified config file was not found.");
             Environment.Exit(3);
         }
 
-        string contents = File.ReadAllText(pathToConfigFile);
+        JsonOptions.Default.PropertyNameCaseInsensitive = true;
+        JsonOptions.Default.SerializationFlags = JsonSerializationFlags.Json5;
+        JsonOptions.Default.Converters.Add(new StaticCSSConverterMapper());
+        JsonOptions.Default.Converters.Add(new DictionaryMapper());
 
-        JsonOptions.PropertyNameCaseInsensitive = true;
-        JsonOptions.Mappers.Add(new StaticCSSConverterMapper());
-        JsonOptions.Mappers.Add(new DictionaryMapper());
-
-        JsonObject jsonObj = JsonValue.Parse(contents).GetJsonObject();
+        JsonValue jsonObj = JsonReader.ParseFile(configFile);
         JsonCssCompilerOptions compilerConfig = new JsonCssCompilerOptions();
 
-        compilerConfig.InputFiles = new List<string>(jsonObj["InputFiles"].MaybeNull()?.GetJsonArray().Select(i => i.GetString()) ?? Array.Empty<string>());
-        compilerConfig.InputDirectories = new List<string>(jsonObj["InputDirectories"].MaybeNull()?.GetJsonArray().Select(i => i.GetString()) ?? Array.Empty<string>());
-        compilerConfig.ExcludePatterns = jsonObj["ExcludePatterns"].MaybeNull()?.GetJsonArray().Select(s => s.GetString()) ?? Array.Empty<string>();
-        compilerConfig.Extensions = jsonObj["Extensions"].MaybeNull()?.GetJsonArray().Select(s => s.GetString()) ?? Array.Empty<string>();
+        if (jsonObj["InputFiles"].MaybeNull() is { } inputFiles)
+            args.InputFiles.AddRange(inputFiles.GetJsonArray().Select(s => s.GetString()));
+        if (jsonObj["InputDirectories"].MaybeNull() is { } inputDirectories)
+            args.InputDirectories.AddRange(inputDirectories.GetJsonArray().Select(s => s.GetString()));
+        if (jsonObj["ExcludePatterns"].MaybeNull() is { } ExcludePatterns)
+            args.Exclude.AddRange(ExcludePatterns.GetJsonArray().Select(s => new Regex(s.GetString(), RegexOptions.IgnoreCase)));
+        if (jsonObj["Extensions"].MaybeNull() is { } Extensions)
+            args.Extensions.AddRange(Extensions.GetJsonArray().Select(s => s.GetString()));
 
-        compilerConfig.OutputFile = jsonObj["OutputFile"].MaybeNull()?.GetString();
+        if (jsonObj["OutputFile"].MaybeNull() is { } OutputFile)
+            args.OutputFile = OutputFile.GetString();
 
-        compilerConfig.Converters = jsonObj["Converters"].MaybeNull()?.GetJsonArray().Select(s => s.Get<StaticCSSConverter>()) ?? Array.Empty<StaticCSSConverter>();
-        compilerConfig.AtRulesRewrites = jsonObj["AtRulesRewrites"].MaybeNull()?.Get<IDictionary<string, string>>() ?? new Dictionary<string, string>();
+        if (jsonObj["Converters"].MaybeNull() is { } Converters)
+            args.Converters.AddRange(Converters.GetJsonArray().Select(s => s.Get<StaticCSSConverter>()));
+        if (jsonObj["AtRulesRewrites"].MaybeNull() is { } AtRulesRewrites)
+            args.AtRuleRewriters = AtRulesRewrites.Get<IDictionary<string, string>>();
 
-        compilerConfig.Pretty = jsonObj["Pretty"].MaybeNull()?.GetBoolean();
-        compilerConfig.UseVarShortcut = jsonObj["UseVarShortcut"].MaybeNull()?.GetBoolean();
-        compilerConfig.KeepNestingSpace = jsonObj["KeepNestingSpace"].MaybeNull()?.GetBoolean();
-        compilerConfig.Merge = jsonObj["Merge"].MaybeNull()?.Get<MergeOption>();
-        compilerConfig.MergeOrderPriority = jsonObj["MergeOrderPriority"].MaybeNull()?.Get<MergeOrderPriority>();
-        compilerConfig.FilenameTag = jsonObj["FilenameTag"].MaybeNull()?.Get<FilenameTagOption>();
-
-        return compilerConfig;
-    }
-
-    public void ApplyConfiguration(CascadiumOptions compilerOptions)
-    {
-        compilerOptions.Converters.AddRange(Converters);
-
-        // options is instanted every time the compiler runs
-        if (this.UseVarShortcut != null) compilerOptions.UseVarShortcut = this.UseVarShortcut.Value;
-        if (this.Pretty != null) compilerOptions.Pretty = this.Pretty.Value;
-        if (this.KeepNestingSpace != null) compilerOptions.KeepNestingSpace = this.KeepNestingSpace.Value;
-        if (this.Merge != null) compilerOptions.Merge = this.Merge.Value;
-        if (this.MergeOrderPriority != null) compilerOptions.MergeOrderPriority = this.MergeOrderPriority.Value;
-
-        foreach (KeyValuePair<string, string> mediaRw in this.AtRulesRewrites)
-        {
-            compilerOptions.AtRulesRewrites.Add(mediaRw.Key, mediaRw.Value);
-        }
+        if (jsonObj["Pretty"].MaybeNull() is { } Pretty)
+            args.Pretty = Pretty.GetBoolean();
+        if (jsonObj["UseVarShortcut"].MaybeNull() is { } UseVarShortcut)
+            args.UseVarShortcuts = UseVarShortcut.GetBoolean();
+        if (jsonObj["KeepNestingSpace"].MaybeNull() is { } KeepNestingSpace)
+            args.KeepNestingSpace = KeepNestingSpace.GetBoolean();
+        if (jsonObj["MergeOrderPriority"].MaybeNull() is { } MergeOrderPriority)
+            args.MergeOrder = MergeOrderPriority.Get<MergeOrderPriority>();
+        if (jsonObj["FilenameTag"].MaybeNull() is { } FilenameTag)
+            args.FilenameTag = FilenameTag.Get<FilenameTagOption>();
     }
 }
 

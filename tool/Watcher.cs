@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,7 +9,7 @@ namespace cascadiumtool;
 
 internal static class Watcher
 {
-    private static FileSystemWatcher fsWatcher = new FileSystemWatcher();
+    private static readonly FileSystemWatcher fsWatcher = new FileSystemWatcher();
     private static CommandLineArguments watchArgs = null!;
     private static string[] watchingDirectories = Array.Empty<string>();
     private static bool IsRunningCompilation = false;
@@ -20,6 +18,11 @@ internal static class Watcher
     {
         watchArgs = args;
         HashSet<string> paths = new HashSet<string>();
+
+        if (args.OutputFile is null)
+        {
+            return Log.ErrorKill("Seems like you're trying to run watch without specifying an output file.");
+        }
 
         foreach (string fdir in args.InputDirectories)
         {
@@ -43,7 +46,7 @@ internal static class Watcher
         {
             if (!Directory.Exists(p))
             {
-                return Log.ErrorKill("the detected directory path at " + p + " does not exists.");
+                return Log.ErrorKill("The detected directory path at " + p + " does not exists.");
             }
 
             if (smallestPath == null || p.Length < smallestPath.Length)
@@ -65,7 +68,9 @@ internal static class Watcher
         fsWatcher.EnableRaisingEvents = true;
 
         await Compiler.RunCompiler(args);
-        Log.Info("cascadium is watching for file changes");
+
+        Log.Info("");
+        Log.Info("Ready! Cascadium is now watching for file changes.");
         //Log.LoggingEnabled = false;
 
         Thread.Sleep(-1);
@@ -83,7 +88,7 @@ internal static class Watcher
 
             IsRunningCompilation = true;
 
-            string outFile = PathUtils.ResolvePath(watchArgs.OutputFile);
+            string outFile = PathUtils.ResolvePath(watchArgs.OutputFile!);
             if (outFile == e.FullPath)
             {
                 // avoid compiling the out file
