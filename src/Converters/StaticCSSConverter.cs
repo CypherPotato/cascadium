@@ -29,11 +29,11 @@ public class StaticCSSConverter : CSSConverter
     /// <inheritdoc/>
     public override Boolean CanConvert(String propertyName, String value)
     {
-        if (string.Compare(propertyName, MatchProperty, true) == 0)
+        if (string.Compare(propertyName, this.MatchProperty, true) == 0)
         {
-            if (ArgumentCount != null)
+            if (this.ArgumentCount != null)
             {
-                if (ArgumentCount == SafeSplit(value).Length)
+                if (this.ArgumentCount == this.SafeSplit(value).Length)
                 {
                     return true;
                 }
@@ -53,10 +53,10 @@ public class StaticCSSConverter : CSSConverter
     /// <inheritdoc/>
     public override void Convert(String? value, NameValueCollection outputDeclarations)
     {
-        if (ArgumentCount != null)
+        if (this.ArgumentCount != null)
         {
-            string[] arguments = SafeSplit(value);
-            foreach (KeyValuePair<string, string> pair in Output)
+            string[] arguments = this.SafeSplit(value);
+            foreach (KeyValuePair<string, string> pair in this.Output)
             {
                 string newValue = pair.Value;
 
@@ -70,7 +70,7 @@ public class StaticCSSConverter : CSSConverter
         }
         else
         {
-            foreach (KeyValuePair<string, string> pair in Output)
+            foreach (KeyValuePair<string, string> pair in this.Output)
             {
                 string newValue = pair.Value.Replace("$*", value);
                 outputDeclarations.Add(pair.Key, newValue);

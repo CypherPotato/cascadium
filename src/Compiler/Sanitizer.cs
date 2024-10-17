@@ -6,7 +6,7 @@ class Sanitizer
 {
     public static string SanitizeInput(string input)
     {
-        StringBuilder output = new StringBuilder();
+        StringBuilder output = new StringBuilder(input.Length);
 
         char[] inputChars = input.ToCharArray();
 
@@ -35,17 +35,18 @@ class Sanitizer
             {
                 inMultilineComment = true;
                 if (output.Length > 0) output.Length--;
+                continue;
             }
             else if (current == '/' && before == '*' && !inString() && !inSinglelineComment)
             {
                 inMultilineComment = false;
-                if (output.Length > 0) output.Length--;
                 continue;
             }
             else if (current == '/' && before == '/' && !inString() && !inMultilineComment)
             {
                 inSinglelineComment = true;
                 if (output.Length > 0) output.Length--;
+                continue;
             }
             else if (current == '\n' || current == '\r' && !inString() && inSinglelineComment)
             {

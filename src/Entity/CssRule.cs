@@ -18,7 +18,7 @@ public class CssRule
     /// <summary>
     /// Gets the declarations defined in this <see cref="CssRule"/>.
     /// </summary>
-    public IDictionary<string, string> Declarations { get => _declarations; }
+    public IDictionary<string, string> Declarations { get => this._declarations; }
 
     /// <summary>
     /// Gets the hash code for this <see cref="CssRule"/>.
@@ -38,13 +38,13 @@ public class CssRule
         // bar: foo
         // foo: bar
 
-        foreach (var kp in _declarations)
+        foreach (var kp in this._declarations)
         {
             n += (kp.Key.GetHashCode() + kp.Value.GetHashCode()) / 2;
             n *= j;
             j++;
         }
-        return n / _declarations.Count;
+        return n / this._declarations.Count;
     }
 
     /// <summary>

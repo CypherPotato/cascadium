@@ -1,5 +1,5 @@
-﻿using Cascadium.Object;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Cascadium.Object;
 
 namespace Cascadium.Compiler;
 
@@ -9,7 +9,7 @@ internal class Tokenizer
 
     public Tokenizer(string code)
     {
-        this.Interpreter = new TextInterpreter(code);
+        Interpreter = new TextInterpreter(code);
     }
 
     public void Tokenize(TokenBuffer collection)
@@ -21,34 +21,31 @@ internal class Tokenizer
 
         string result;
         char hit;
-        while ((hit = this.Interpreter.ReadUntil(hitChars, true, out result)) != '\0')
+        while ((hit = Interpreter.ReadUntil(hitChars, true, out result)) != '\0')
         {
             if (hit == Token.Ch_Semicolon)
             {
-                tokens.AddRange(this.ReadCurrentDeclaration(result));
-                continue;
+                tokens.AddRange(ReadCurrentDeclaration(result));
             }
             else if (hit == Token.Ch_BraceOpen)
             {
-                tokens.AddRange(this.ReadSelectors(result));
-                tokens.Add(new Token(TokenType.Em_RuleStart, "", this.Interpreter));
+                tokens.AddRange(ReadSelectors(result));
+                tokens.Add(new Token(TokenType.Em_RuleStart, "", Interpreter));
 
                 opennedRules++;
-                lastOpennedRule = this.Interpreter.TakeSnapshot(-1);
+                lastOpennedRule = Interpreter.TakeSnapshot(-1);
 
-                continue;
             }
             else if (hit == Token.Ch_BraceClose)
             {
                 if (!string.IsNullOrWhiteSpace(result))
                 {
                     // remaining declaration
-                    tokens.AddRange(this.ReadCurrentDeclaration(result));
+                    tokens.AddRange(ReadCurrentDeclaration(result));
                 }
 
-                tokens.Add(new Token(TokenType.Em_RuleEnd, "", this.Interpreter));
+                tokens.Add(new Token(TokenType.Em_RuleEnd, "", Interpreter));
                 opennedRules--;
-                continue;
             }
         }
 
@@ -56,13 +53,13 @@ internal class Tokenizer
         {
             if (!string.IsNullOrWhiteSpace(result))
             {
-                throw new CascadiumException(this.Interpreter.TakeSnapshot(result), this.Interpreter.InputString, "syntax error: unexpected token");
+                throw new CascadiumException(Interpreter.TakeSnapshot(result), Interpreter.InputString, "syntax error: unexpected token");
             }
         }
 
         if (opennedRules != 0)
         {
-            throw new CascadiumException(lastOpennedRule, this.Interpreter.InputString, "syntax error: unclosed rule");
+            throw new CascadiumException(lastOpennedRule, Interpreter.InputString, "syntax error: unclosed rule");
         }
 
         collection.Write(tokens);
@@ -73,14 +70,14 @@ internal class Tokenizer
         if (declaration.TrimStart().StartsWith('@'))
         {
             // its an statement
-            yield return new Token(TokenType.Em_Statement, declaration.Trim(), this.Interpreter);
+            yield return new Token(TokenType.Em_Statement, declaration.Trim(), Interpreter);
             yield break;
         }
 
         int dotPos = declaration.IndexOf(Token.Ch_DoubleDots);
         if (dotPos == -1)
         {
-            throw new CascadiumException(this.Interpreter.TakeSnapshot(declaration), this.Interpreter.InputString, "syntax error: unexpected token \"" + declaration.Trim() + "\"");
+            throw new CascadiumException(Interpreter.TakeSnapshot(declaration), Interpreter.InputString, "syntax error: unexpected token \"" + declaration.Trim() + "\"");
         }
 
         string property = declaration.Substring(0, dotPos).Trim();
@@ -88,16 +85,16 @@ internal class Tokenizer
 
         if (!Token.IsValidPropertyName(property))
         {
-            throw new CascadiumException(this.Interpreter.TakeSnapshot(declaration), this.Interpreter.InputString, "syntax error: invalid property name");
+            throw new CascadiumException(Interpreter.TakeSnapshot(declaration), Interpreter.InputString, "syntax error: invalid property name");
         }
         else if (Token.IsPropertyValueUnescapedDoubleDots(value))
         {
-            throw new CascadiumException(this.Interpreter.TakeSnapshot(declaration), this.Interpreter.InputString, "syntax error: unclosed declaration");
+            throw new CascadiumException(Interpreter.TakeSnapshot(declaration), Interpreter.InputString, "syntax error: unclosed declaration");
         }
         else
         {
-            yield return new Token(TokenType.Em_PropertyName, property, this.Interpreter);
-            yield return new Token(TokenType.Em_PropertyValue, value, this.Interpreter);
+            yield return new Token(TokenType.Em_PropertyName, property, Interpreter);
+            yield return new Token(TokenType.Em_PropertyValue, value, Interpreter);
         }
     }
 
@@ -105,14 +102,14 @@ internal class Tokenizer
     {
         if (selectorCode.IndexOf(',') < 0)
         {
-            yield return new Token(TokenType.Em_Selector, selectorCode.Trim(), this.Interpreter);
+            yield return new Token(TokenType.Em_Selector, selectorCode.Trim(), Interpreter);
         }
         else
         {
             string[] selectors = Helper.SafeSplit(selectorCode, ',');
             foreach (string s in selectors)
             {
-                yield return new Token(TokenType.Em_Selector, s.Trim(), this.Interpreter);
+                yield return new Token(TokenType.Em_Selector, s.Trim(), Interpreter);
             }
         }
     }
