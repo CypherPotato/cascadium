@@ -11,7 +11,7 @@ namespace cascadiumtool;
 
 internal class Program
 {
-    public const string VersionLabel = "v.0.8.0";
+    public const string VersionLabel = "v.0.9.2";
     public static string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
     public static Dictionary<string, string> CompilerCache { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -72,11 +72,19 @@ internal class Program
             Log.Info("Caching the current XCSS repository...");
         }
 
+        if (configFile is not null)
+        {
+            JsonCssCompilerOptions.Apply(configFile, arguments);
+            CurrentDirectory = Path.GetDirectoryName(configFile)!;
+
+            ;
+        }
+
         // options that are lists. json should add to them
-        arguments.InputFiles = parsed.GetValues("file", 'f').ToList();
-        arguments.Extensions = parsed.GetValues("extension", 'x').ToList();
-        arguments.Exclude = parsed.GetValues("exclude", 'e').Select(x => new Regex(x, RegexOptions.IgnoreCase)).ToList();
-        arguments.InputDirectories = parsed.GetValues("dir", 'd').ToList();
+        arguments.InputFiles.AddRange(parsed.GetValues("file", 'f').ToList());
+        arguments.Extensions.AddRange(parsed.GetValues("extension", 'x').ToList());
+        arguments.Exclude.AddRange(parsed.GetValues("exclude", 'e').Select(x => new Regex(x, RegexOptions.IgnoreCase)).ToList());
+        arguments.InputDirectories.AddRange(parsed.GetValues("dir", 'd').ToList());
 
         // options that arent present on config json
         arguments.StdIn = parsed.IsDefined("stdin");
@@ -102,12 +110,6 @@ internal class Program
 
         if (parsed.GetValue("p:filenametag") is { } pfilenametag)
             arguments.FilenameTag = Enum.Parse<FilenameTagOption>(pfilenametag, true);
-
-        if (configFile is not null)
-        {
-            JsonCssCompilerOptions.Apply(configFile, arguments);
-            CurrentDirectory = Path.GetDirectoryName(configFile)!;
-        }
 
         return await RunParsed(arguments);
     }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace Cascadium.Compiler;
 
@@ -7,8 +8,7 @@ class Sanitizer
     public static string SanitizeInput(string input)
     {
         StringBuilder output = new StringBuilder(input.Length);
-
-        char[] inputChars = input.ToCharArray();
+        ReadOnlySpan<char> inputChars = input;
 
         bool inSingleString = false;
         bool inDoubleString = false;
@@ -18,10 +18,12 @@ class Sanitizer
         var inString = () => inSingleString || inDoubleString;
         var inComment = () => inMultilineComment || inSinglelineComment;
 
-        for (int i = 0; i < inputChars.Length; i++)
+        int len = inputChars.Length;
+        for (int i = 0; i < len; i++)
         {
             char current = inputChars[i];
             char before = i > 0 ? inputChars[i - 1] : '\0';
+            char next = len - 1 > i ? inputChars[i + 1] : '\0';
 
             if (current == '\'' && before != '\\' && !inDoubleString && !inComment())
             {
@@ -42,13 +44,13 @@ class Sanitizer
                 inMultilineComment = false;
                 continue;
             }
-            else if (current == '/' && before == '/' && !inString() && !inMultilineComment)
+            else if (current == '/' && before == '/' && next != '*' && !inString() && !inMultilineComment)
             {
                 inSinglelineComment = true;
                 if (output.Length > 0) output.Length--;
                 continue;
             }
-            else if (current == '\n' || current == '\r' && !inString() && inSinglelineComment)
+            else if ((current == '\n' || current == '\r') && !inString() && inSinglelineComment)
             {
                 inSinglelineComment = false;
             }

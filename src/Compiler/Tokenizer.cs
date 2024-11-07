@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Cascadium.Object;
+﻿using Cascadium.Object;
+using System.Collections.Generic;
 
 namespace Cascadium.Compiler;
 

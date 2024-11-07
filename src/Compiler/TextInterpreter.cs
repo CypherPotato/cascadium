@@ -14,9 +14,9 @@ class TextInterpreter
         get
         {
             int ocurrences = 1; // line start at 1
-            for (int i = 0; i < this.Position; i++)
+            for (int i = 0; i < Position; i++)
             {
-                if (this.InputString[i] == '\n')
+                if (InputString[i] == '\n')
                 {
                     ocurrences++;
                 }
@@ -30,9 +30,9 @@ class TextInterpreter
         get
         {
             int col = 1;
-            for (int n = 0; n < this.Position; n++)
+            for (int n = 0; n < Position; n++)
             {
-                if (this.InputString[n] == '\n')
+                if (InputString[n] == '\n')
                 {
                     col = 0;
                 }
@@ -44,48 +44,48 @@ class TextInterpreter
 
     public TextInterpreter(string s)
     {
-        this.InputString = s;
-        this.Length = this.InputString.Length;
+        InputString = s;
+        Length = InputString.Length;
     }
 
     public TokenDebugInfo TakeSnapshot(string text)
     {
-        int textIndex = this.InputString.Substring(0, this.Position).LastIndexOf(text.Trim());
-        return this.TakeSnapshot(-(this.Position - textIndex));
+        int textIndex = InputString.Substring(0, Position).LastIndexOf(text.Trim());
+        return TakeSnapshot(-(Position - textIndex));
     }
 
     public TokenDebugInfo TakeSnapshot(int offset = 0)
     {
-        this.Move(offset);
+        Move(offset);
         var snapshot = new TokenDebugInfo()
         {
-            Column = this.Column,
-            Line = this.Line
+            Column = Column,
+            Line = Line
         };
-        this.Move(offset * -1);
+        Move(offset * -1);
 
         return snapshot;
     }
 
     public bool CanRead()
     {
-        return this.Position < this.InputString.Length - 1;
+        return Position < InputString.Length - 1;
     }
 
     public void Move(int count)
     {
-        this.Position = Math.Min(Math.Max(this.Position + count, 0), this.InputString.Length);
+        Position = Math.Min(Math.Max(Position + count, 0), InputString.Length);
     }
 
     public int Read(out char c)
     {
-        if (this.InputString.Length <= this.Position)
+        if (InputString.Length <= Position)
         {
             c = '\0';
             return -1;
         }
-        c = this.InputString[this.Position];
-        this.Position++;
+        c = InputString[Position];
+        Position++;
         return 1;
     }
 
@@ -96,7 +96,7 @@ class TextInterpreter
         int n = 0;
         while (n < count)
         {
-            int j = this.Read(out char c);
+            int j = Read(out char c);
             if (j >= 0)
             {
                 sb.Append(c);
@@ -117,7 +117,7 @@ class TextInterpreter
         bool inSingleString = false;
         char b = '\0';
 
-        while (this.Read(out char c) > 0)
+        while (Read(out char c) > 0)
         {
             if (wrapStringToken && !inSingleString && c == Token.Ch_DoubleStringQuote && b != Token.Ch_CharEscape)
             {
@@ -154,7 +154,7 @@ class TextInterpreter
         bool skipping = true;
         while (skipping)
         {
-            if (this.Read(out char c) > 0)
+            if (Read(out char c) > 0)
             {
                 if (Token.IsWhitespaceChr(c))
                 {
@@ -162,7 +162,7 @@ class TextInterpreter
                 }
                 else
                 {
-                    this.Move(-1);
+                    Move(-1);
                     break;
                 }
             }
