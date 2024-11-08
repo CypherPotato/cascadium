@@ -23,17 +23,17 @@ public class CssStylesheet
     /// <summary>
     /// Gets the individual statements of this stylesheet.
     /// </summary>
-    public string[] Statements { get => this._statements.ToArray(); }
+    public string[] Statements { get => _statements.ToArray(); }
 
     /// <summary>
     /// Gets the children <see cref="CssStylesheet"/> of this stylesheet.
     /// </summary>
-    public CssStylesheet[] Stylesheets { get => this._stylesheets.ToArray(); }
+    public CssStylesheet[] Stylesheets { get => _stylesheets.ToArray(); }
 
     /// <summary>
     /// Gets an array of <see cref="CssRule"/> of this stylesheet.
     /// </summary>
-    public CssRule[] Rules { get => this._rules.ToArray(); }
+    public CssRule[] Rules { get => _rules.ToArray(); }
 
     /// <summary>
     /// Gets the used <see cref="CascadiumOptions"/> used to compile this CSS stylesheet.
@@ -47,19 +47,24 @@ public class CssStylesheet
     /// <returns>An CSS string.</returns>
     public string Export()
     {
-        return this.Export(this.Options);
+        return Export(Options);
     }
-
 
     internal CssStylesheet GetOrCreateStylesheet(string atRuleDeclaration, bool canMerge)
     {
         if (canMerge)
         {
             string sanitized = Helper.RemoveSpaces(atRuleDeclaration);
-            foreach (CssStylesheet subStylesheet in this._stylesheets)
+            for (int i = 0; i < _stylesheets.Count; i++)
             {
+                CssStylesheet subStylesheet = _stylesheets[i];
                 if (Helper.RemoveSpaces(subStylesheet.AtRuleDeclaration ?? "") == sanitized)
                 {
+                    // move found item to the end of the collection to maintain
+                    // cascading index
+                    _stylesheets.Remove(subStylesheet);
+                    _stylesheets.Add(subStylesheet);
+
                     return subStylesheet;
                 }
             }
@@ -68,7 +73,7 @@ public class CssStylesheet
             {
                 AtRuleDeclaration = atRuleDeclaration
             };
-            this._stylesheets.Add(newStylesheet);
+            _stylesheets.Add(newStylesheet);
             return newStylesheet;
         }
         else
@@ -77,7 +82,7 @@ public class CssStylesheet
             {
                 AtRuleDeclaration = atRuleDeclaration
             };
-            this._stylesheets.Add(newStylesheet);
+            _stylesheets.Add(newStylesheet);
             return newStylesheet;
         }
     }
@@ -151,17 +156,17 @@ public class CssStylesheet
             }
         }
 
-        foreach (string decl in this._statements)
+        foreach (string decl in _statements)
         {
             sb.Append(decl);
             sb.Append(';');
             if (options.Pretty) sb.AppendLine();
         }
-        if (options.Pretty && this._statements.Count > 0) sb.AppendLine();
+        if (options.Pretty && _statements.Count > 0) sb.AppendLine();
 
         ExportRules(this, 0);
 
-        foreach (CssStylesheet stylesheet in this._stylesheets)
+        foreach (CssStylesheet stylesheet in _stylesheets)
         {
             ExportStylesheet(stylesheet, 0);
         }

@@ -12,4 +12,4 @@ dotnet publish "%~dp0/../Cascadium-Utility.csproj" --nologo ^
 	-p:PublishReadyToRun=true ^
 	-p:PublishTrimmed=true ^
 	-p:PublishSingleFile=true ^
-	-o "%~dp0bin/Build/cascadium-v0.8-%NAME%/"
+	-o "%~dp0bin/Build/cascadium-v0.9.2-%NAME%/"

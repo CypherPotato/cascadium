@@ -15,20 +15,6 @@ internal class Program
     public static string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
     public static Dictionary<string, string> CompilerCache { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-    public static string[] Greetings = [
-        "Good morning, sunshine Cascadium!",
-        "Cascadium is heating up. Please, wait.",
-        "Hello, Cascadium!",
-        "Starting the Cascadium engines",
-        "Is the coffee ready? Let's code!",
-        "Hey hey, Cascadium!",
-        "Cascadium is excited today! Are you?",
-        "Another day, more cascading style sheets!",
-        "Cascadium is saying hello to you. Say it back!",
-        "Looks like it's the Cascadium code-hour!",
-        "Wake up, Cascadium! The programmer wants you to do things again."
-    ];
-
     static async Task<int> Main(string[] args)
     {
         if (args.Length == 0)
@@ -68,7 +54,6 @@ internal class Program
         if (string.Compare(runVerb, "watch", true) == 0)
         {
             arguments.Watch = true;
-            Log.Info(Greetings[Random.Shared.Next(0, Greetings.Length - 1)]);
             Log.Info("Caching the current XCSS repository...");
         }
 

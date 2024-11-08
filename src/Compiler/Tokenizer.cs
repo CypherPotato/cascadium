@@ -15,7 +15,6 @@ internal class Tokenizer
     public void Tokenize(TokenBuffer collection)
     {
         char[] hitChars = new char[] { Token.Ch_BraceOpen, Token.Ch_BraceClose, Token.Ch_Semicolon };
-        List<Token> tokens = new List<Token>();
         int opennedRules = 0;
         TokenDebugInfo lastOpennedRule = default;
 
@@ -25,12 +24,12 @@ internal class Tokenizer
         {
             if (hit == Token.Ch_Semicolon)
             {
-                tokens.AddRange(ReadCurrentDeclaration(result));
+                collection.Write(ReadCurrentDeclaration(result));
             }
             else if (hit == Token.Ch_BraceOpen)
             {
-                tokens.AddRange(ReadSelectors(result));
-                tokens.Add(new Token(TokenType.Em_RuleStart, "", Interpreter));
+                collection.Write(ReadSelectors(result));
+                collection.Write(new Token(TokenType.Em_RuleStart, "", Interpreter));
 
                 opennedRules++;
                 lastOpennedRule = Interpreter.TakeSnapshot(-1);
@@ -41,28 +40,23 @@ internal class Tokenizer
                 if (!string.IsNullOrWhiteSpace(result))
                 {
                     // remaining declaration
-                    tokens.AddRange(ReadCurrentDeclaration(result));
+                    collection.Write(ReadCurrentDeclaration(result));
                 }
 
-                tokens.Add(new Token(TokenType.Em_RuleEnd, "", Interpreter));
+                collection.Write(new Token(TokenType.Em_RuleEnd, "", Interpreter));
                 opennedRules--;
             }
         }
 
-        if (hit == '\0')
+        if (hit == '\0' && !string.IsNullOrWhiteSpace(result))
         {
-            if (!string.IsNullOrWhiteSpace(result))
-            {
-                throw new CascadiumException(Interpreter.TakeSnapshot(result), Interpreter.InputString, "syntax error: unexpected token");
-            }
+            throw new CascadiumException(Interpreter.TakeSnapshot(result), Interpreter.InputString, "syntax error: unexpected token");
         }
 
         if (opennedRules != 0)
         {
             throw new CascadiumException(lastOpennedRule, Interpreter.InputString, "syntax error: unclosed rule");
         }
-
-        collection.Write(tokens);
     }
 
     IEnumerable<Token> ReadCurrentDeclaration(string declaration)

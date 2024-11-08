@@ -11,7 +11,7 @@ internal class Flattener
     {
         FlatStylesheet output = new FlatStylesheet();
 
-        void CreateRules(NestedRule rule, IEnumerable<NestedRule> parents)
+        static void CreateRules(FlatStylesheet output, NestedRule rule, IEnumerable<NestedRule> parents)
         {
             List<string[]> selectors = new List<string[]>();
 
@@ -31,13 +31,13 @@ internal class Flattener
 
             foreach (NestedRule r in rule.Rules)
             {
-                CreateRules(r, parents.Concat(new[] { rule }));
+                CreateRules(output, r, parents.Concat([rule]));
             }
         }
 
         foreach (NestedRule r in nestedStylesheet.Rules)
         {
-            CreateRules(r, Array.Empty<NestedRule>());
+            CreateRules(output, r, Array.Empty<NestedRule>());
         }
 
         output.Statements.AddRange(nestedStylesheet.Statements);
