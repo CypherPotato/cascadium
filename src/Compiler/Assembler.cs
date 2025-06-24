@@ -57,7 +57,7 @@ class Assembler
 
                 if (atRule != null)
                 {
-                    bool canMerge = Context.Options.Merge.HasFlag(MergeOption.AtRules) || IsGroupAtRule(atRule);
+                    bool canMerge = Context.Options.Merge.HasFlag(MergeOption.AtRules) || AtRule.IsGroupAtRule(atRule);
                     CssStylesheet atRuleStylesheet = result.GetOrCreateStylesheet(atRule, canMerge);
                     atRuleStylesheet._rules.Add(cssRule);
                 }
@@ -81,21 +81,6 @@ class Assembler
 
         return result;
     }
-
-    static bool IsNotEligibleToSelectorMerge(string selector)
-        => selector.StartsWith("@font-face", StringComparison.InvariantCultureIgnoreCase) ||
-           selector.StartsWith("@counter-style", StringComparison.InvariantCultureIgnoreCase) ||
-           selector.StartsWith("@color-profile", StringComparison.InvariantCultureIgnoreCase);
-
-    static bool IsGroupAtRule(string atRule)
-        => atRule.StartsWith("@media", StringComparison.InvariantCultureIgnoreCase) ||
-           atRule.StartsWith("@scope", StringComparison.InvariantCultureIgnoreCase) ||
-           atRule.StartsWith("@supports", StringComparison.InvariantCultureIgnoreCase) ||
-           atRule.StartsWith("@page", StringComparison.InvariantCultureIgnoreCase) ||
-           atRule.StartsWith("@keyframes", StringComparison.InvariantCultureIgnoreCase) ||
-           atRule.StartsWith("@counter-style", StringComparison.InvariantCultureIgnoreCase) ||
-           atRule.StartsWith("@layer", StringComparison.InvariantCultureIgnoreCase) ||
-           atRule.StartsWith("@container", StringComparison.InvariantCultureIgnoreCase);
 
     string BuildCssSelector(IList<string[]> selectors)
     {
@@ -189,11 +174,11 @@ class Assembler
     {
         if (options.Merge.HasFlag(MergeOption.Selectors))
         {
-            List<CssRule> newRules = new List<CssRule>();
+            List<CssRule> newRules = [];
 
             foreach (CssRule rule in stylesheet._rules)
             {
-                if (IsNotEligibleToSelectorMerge(rule.Selector))
+                if (AtRule.IsNotEligibleToSelectorMerge(rule.Selector))
                 {
                     newRules.Add(rule);
                     continue;
@@ -227,7 +212,7 @@ class Assembler
         if (options.Merge.HasFlag(MergeOption.Declarations))
         {
             // merge top-level only
-            List<CssRule> newRules = new List<CssRule>();
+            List<CssRule> newRules = [];
 
             foreach (CssRule rule in stylesheet._rules)
             {

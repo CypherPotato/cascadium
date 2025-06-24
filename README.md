@@ -517,7 +517,7 @@ Syntax:
 - JSON:
     ```json
     {
-        "FilenameTag": "full" | "relative"
+        "FilenameTag": "full" | "relative" | "none"
     }
     ```
 

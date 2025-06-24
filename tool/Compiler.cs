@@ -18,7 +18,7 @@ internal class Compiler
 {
     static readonly Regex VendorRegex = new Regex(@"[\\/]vendor[\\/]?", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public static async Task<int> RunCompiler(CommandLineArguments args)
+    public static async Task<int> RunCompiler(CascadiumCompilationConfiguration args)
     {
         if (args.OutputFile == null)
             Log.LoggingEnabled = false;
@@ -59,8 +59,8 @@ internal class Compiler
         }
 
         {
-            List<string> includedExtensions = new List<string>() { ".xcss" };
-            List<string> inputFiles = new List<string>();
+            List<string> includedExtensions = [".xcss"];
+            List<string> inputFiles = [];
 
             string? outputFile = null;
             if (!string.IsNullOrEmpty(args.OutputFile))
@@ -124,7 +124,7 @@ internal class Compiler
                     await Parallel.ForEachAsync(inputFiles,
                         new ParallelOptions()
                         {
-                            MaxDegreeOfParallelism = Environment.ProcessorCount,
+                            MaxDegreeOfParallelism = Environment.ProcessorCount * 4,
                             CancellationToken = errorCanceller.Token
                         }, (file, ct) =>
                         {
@@ -213,7 +213,7 @@ internal class Compiler
                     {
                         Log.Info("Merging...");
                         options.Merge = m;
-                        options.MergeOrderPriority = args.MergeOrder ?? MergeOrderPriority.PreserveLast;
+                        options.MergeOrderPriority = args.MergeOrder;
 
                         string mergedCss = CascadiumCompiler.Compile(css, options);
                         if (outputFile != null)

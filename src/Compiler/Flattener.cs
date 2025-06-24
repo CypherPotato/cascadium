@@ -13,10 +13,15 @@ internal class Flattener
 
         static void CreateRules(FlatStylesheet output, NestedRule rule, IEnumerable<NestedRule> parents)
         {
-            List<string[]> selectors = new List<string[]>();
+            List<string[]> selectors = [];
 
             foreach (NestedRule parent in parents)
             {
+                if (parent.Selectors.Count == 0)
+                    continue;
+
+                if (AtRule.IsNotParentInherited(parent.Selectors[0]))
+                    selectors.Clear();
                 selectors.Add(parent.Selectors.ToArray());
             }
 
@@ -33,6 +38,11 @@ internal class Flattener
             {
                 CreateRules(output, r, parents.Concat([rule]));
             }
+        }
+
+        static bool CanFlattenParentSelectors(NestedRule rule)
+        {
+            return rule.Selectors.Count > 0 && !AtRule.IsNotParentInherited(rule.Selectors[0]);
         }
 
         foreach (NestedRule r in nestedStylesheet.Rules)

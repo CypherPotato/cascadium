@@ -1,5 +1,7 @@
 ﻿using Cascadium;
 using CommandLine;
+using LightJson;
+using LightJson.Converters;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,7 +13,7 @@ namespace cascadiumtool;
 
 internal class Program
 {
-    public const string VersionLabel = "v.0.9.2";
+    public const string VersionLabel = "v.0.10";
     public static string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
     public static Dictionary<string, string> CompilerCache { get; set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -23,7 +25,15 @@ internal class Program
             return 0;
         }
 
-        CommandLineArguments arguments = new CommandLineArguments();
+        JsonOptions.Default.SerializerContext = AppJsonContext.Default;
+        JsonOptions.Default.PropertyNameComparer = JsonSanitizedComparer.Instance;
+        JsonOptions.Default.SerializationFlags = LightJson.Serialization.JsonSerializationFlags.Json5;
+        JsonOptions.Default.Converters.Add(new StaticCSSConverterMapper());
+        JsonOptions.Default.Converters.Add(new JsonConverter<Regex>(
+            onDeserialize: j => new Regex(j.GetString(), RegexOptions.IgnoreCase),
+            onSerialize: r => r.ToString()));
+
+        CascadiumCompilationConfiguration configuration;
         var parsed = new CommandLineParser(args.Skip(1).ToArray());
 
         string[] implicitConfigFiles = [
@@ -33,14 +43,15 @@ internal class Program
             "cascadium.json5"
         ];
 
-        string? configFile = null;
-        arguments.ConfigFile = parsed.GetValue("config", 'c');
+        string? configFile = parsed.GetValue("config", 'c');
 
-        if (arguments.ConfigFile is not null)
+        if (configFile is not null)
         {
-            configFile = PathUtils.ResolvePath(arguments.ConfigFile);
+            configFile = PathUtils.ResolvePath(configFile);
         }
-        else foreach (string implicitFile in implicitConfigFiles)
+        else
+        {
+            foreach (string implicitFile in implicitConfigFiles)
             {
                 string rpath = PathUtils.ResolvePath(implicitFile);
                 if (File.Exists(rpath))
@@ -49,57 +60,60 @@ internal class Program
                     break;
                 }
             }
-
-        string runVerb = args[0];
-        if (string.Compare(runVerb, "watch", true) == 0)
-        {
-            arguments.Watch = true;
-            Log.Info("Caching the current XCSS repository...");
         }
 
         if (configFile is not null)
         {
-            JsonCssCompilerOptions.Apply(configFile, arguments);
+            configuration = JsonOptions.Default.Deserialize<CascadiumCompilationConfiguration>(File.ReadAllText(configFile));
             CurrentDirectory = Path.GetDirectoryName(configFile)!;
+        }
+        else
+        {
+            configuration = new CascadiumCompilationConfiguration();
+        }
 
-            ;
+        string runVerb = args[0];
+        if (string.Compare(runVerb, "watch", true) == 0)
+        {
+            configuration.Watch = true;
+            Log.Info("Caching the current XCSS repository...");
         }
 
         // options that are lists. json should add to them
-        arguments.InputFiles.AddRange(parsed.GetValues("file", 'f').ToList());
-        arguments.Extensions.AddRange(parsed.GetValues("extension", 'x').ToList());
-        arguments.Exclude.AddRange(parsed.GetValues("exclude", 'e').Select(x => new Regex(x, RegexOptions.IgnoreCase)).ToList());
-        arguments.InputDirectories.AddRange(parsed.GetValues("dir", 'd').ToList());
+        configuration.InputFiles.AddRange(parsed.GetValues("file", 'f').ToList());
+        configuration.Extensions.AddRange(parsed.GetValues("extension", 'x').ToList());
+        configuration.Exclude.AddRange(parsed.GetValues("exclude", 'e').Select(x => new Regex(x, RegexOptions.IgnoreCase)).ToList());
+        configuration.InputDirectories.AddRange(parsed.GetValues("dir", 'd').ToList());
 
         // options that arent present on config json
-        arguments.StdIn = parsed.IsDefined("stdin");
+        configuration.StdIn = parsed.IsDefined("stdin");
 
         // options that its priority is above config json
         if (parsed.GetValue("outfile", 'o') is { } outfile)
-            arguments.OutputFile = outfile;
+            configuration.OutputFile = outfile;
 
         if (parsed.GetValue("p:merge") is { } pmerge)
-            arguments.MergeOption = Enum.Parse<MergeOption>(pmerge, true);
+            configuration.MergeOption = Enum.Parse<MergeOption>(pmerge, true);
 
         if (parsed.GetValue("p:mergeorder") is { } pmergeorder)
-            arguments.MergeOrder = Enum.Parse<MergeOrderPriority>(pmergeorder, true);
+            configuration.MergeOrder = Enum.Parse<MergeOrderPriority>(pmergeorder, true);
 
         if (parsed.GetValue("p:pretty") is { } ppretty)
-            arguments.Pretty = ppretty == "true";
+            configuration.Pretty = ppretty == "true";
 
         if (parsed.GetValue("p:keepnestingspace") is { } pkeepnestingspace)
-            arguments.KeepNestingSpace = pkeepnestingspace == "true";
+            configuration.KeepNestingSpace = pkeepnestingspace == "true";
 
         if (parsed.GetValue("p:usevarshortcuts") is { } pusevarshortcuts)
-            arguments.UseVarShortcuts = pusevarshortcuts == "true";
+            configuration.UseVarShortcuts = pusevarshortcuts == "true";
 
         if (parsed.GetValue("p:filenametag") is { } pfilenametag)
-            arguments.FilenameTag = Enum.Parse<FilenameTagOption>(pfilenametag, true);
+            configuration.FilenameTag = Enum.Parse<FilenameTagOption>(pfilenametag, true);
 
-        return await RunParsed(arguments);
+        return await RunParsed(configuration);
     }
 
-    public static async Task<int> RunParsed(CommandLineArguments args)
+    public static async Task<int> RunParsed(CascadiumCompilationConfiguration args)
     {
         if (args.Watch)
         {

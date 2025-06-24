@@ -10,14 +10,14 @@ namespace cascadiumtool;
 internal static class Watcher
 {
     private static readonly FileSystemWatcher fsWatcher = new FileSystemWatcher();
-    private static CommandLineArguments watchArgs = null!;
+    private static CascadiumCompilationConfiguration watchArgs = null!;
     private static string[] watchingDirectories = Array.Empty<string>();
     private static bool IsRunningCompilation = false;
 
-    public static async Task<int> Watch(CommandLineArguments args)
+    public static async Task<int> Watch(CascadiumCompilationConfiguration args)
     {
         watchArgs = args;
-        HashSet<string> paths = new HashSet<string>();
+        HashSet<string> paths = [];
 
         if (args.OutputFile is null)
         {
@@ -38,7 +38,7 @@ internal static class Watcher
         if (paths.Count == 0)
         {
             paths.Add(Program.CurrentDirectory);
-            args.InputDirectories = new() { Program.CurrentDirectory };
+            args.InputDirectories = [Program.CurrentDirectory];
         }
 
         watchingDirectories = paths.ToArray();
